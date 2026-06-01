@@ -1,22 +1,21 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <title>KREIS Dashboard</title>
-</head>
+{% block title %}
+Dashboard
+{% endblock %}
 
-<body>
-    <h1>KREIS IMS Dashboard</h1>
+{% block content %}
 
-    <p>Welcome {{ user.full_name }}</p>
+<h1>KREIS IMS Dashboard</h1>
 
-    <h2>Stats</h2>
+<p>Welcome {{ current_user.full_name }}</p>
 
-    <ul>
-        <li>Total Schools: {{ stats.total_schools }}</li>
-        <li>Total Assets: {{ stats.total_assets }}</li>
-        <li>Low Stock Items: {{ stats.low_stock_items }}</li>
-    </ul>
-</body>
+<h2>Stats</h2>
 
-</html>
+<ul>
+    <li>Total Schools: {{ stats.total_schools }}</li>
+    <li>Total Assets: {{ stats.total_assets }}</li>
+    <li>Low Stock Items: {{ stats.low_stock }}</li>
+</ul>
+
+{% endblock %}

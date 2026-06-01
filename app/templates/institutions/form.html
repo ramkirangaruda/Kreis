@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}
+New Institution
+{% endblock %}
+
+{% block content %}
+
+<h1>Create Institution</h1>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label>Name</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Code</label>
+        <input type="text" name="code" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>District</label>
+        <input type="text" name="district" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Address</label>
+        <textarea name="address" class="form-control" required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Create
+    </button>
+
+</form>
+
+{% endblock %}

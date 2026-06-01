@@ -19,14 +19,14 @@ async def dashboard(
     stats = {
         "total_schools": 0,
         "total_assets": 0,
-        "low_stock_items": 0
+        "low_stock": 0
     }
 
     return templates.TemplateResponse(
         "dashboard/index.html",
         {
             "request": request,
-            "user": current_user,
+            "current_user": current_user,
             "stats": stats
         }
     )

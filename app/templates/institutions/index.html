@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}
+Institutions
+{% endblock %}
+
+{% block content %}
+
+<h1>Institutions</h1>
+
+<a href="/institutions/new">
+    Add Institution
+</a>
+
+<table class="table table-bordered mt-3">
+
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Code</th>
+            <th>District</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for institution in institutions %}
+        <tr>
+            <td>{{ institution.id }}</td>
+            <td>{{ institution.name }}</td>
+            <td>{{ institution.code }}</td>
+            <td>{{ institution.district }}</td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

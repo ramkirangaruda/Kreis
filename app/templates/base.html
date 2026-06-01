@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        {% block title %}
+        KREIS IMS
+        {% endblock %}
+    </title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css">
+</head>
+
+<body>
+
+    <div class="page">
+
+        <aside class="navbar navbar-vertical navbar-expand-lg">
+            <div class="container-fluid">
+
+                <h1 class="navbar-brand">
+                    KREIS IMS
+                </h1>
+
+                <nav class="navbar-nav">
+
+                    {% if current_user.role.value == "KREIS_ADMIN" %}
+                    <a class="nav-link" href="/institutions">
+                        Institutions
+                    </a>
+                    {% endif %}
+
+                    <a class="nav-link" href="/inventory">
+                        Inventory
+                    </a>
+
+                    <a class="nav-link" href="/reports/stock">
+                        Reports
+                    </a>
+
+                    <a class="nav-link" href="/dashboard">
+                        Dashboard
+                    </a>
+
+                </nav>
+
+            </div>
+        </aside>
+
+        <div class="page-wrapper">
+
+            <div class="container-xl mt-4">
+
+                {% block content %}
+                {% endblock %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+</body>
+
+</html>
