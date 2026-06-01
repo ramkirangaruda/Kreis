@@ -2,6 +2,23 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+
+# Python cache/tools
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+pip-wheel-metadata/
+__pypackages__/
+
+# Python local config
+.python-version
 
 # Virtual environments
 .venv/
@@ -19,10 +36,6 @@ dist/
 *.egg-info/
 
 # Test/coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
 
 # Editor/OS
 .vscode/
@@ -41,3 +54,23 @@ alembic/versions/
 
 # Docker
 *.pid
+
+# PostgreSQL data
+postgres_data/
+
+# Alembic compiled files
+*.pyc
+
+
+# Docker overrides
+docker-compose.override.yml
+
+# Local database files
+*.db
+
+# Secrets/certs
+*.pem
+*.key
+
+# Runtime cache
+.cache/
