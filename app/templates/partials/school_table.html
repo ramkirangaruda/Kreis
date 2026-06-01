@@ -1,0 +1,11 @@
+<table border="1">
+    <tr>
+        <th>School</th>
+    </tr>
+
+    {% for school in schools %}
+    <tr>
+        <td>{{ school.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
