@@ -1,0 +1,35 @@
+{% for asset in assets %}
+<tr>
+    <td>{{ asset.name }}</td>
+    <td>
+        {% if asset.category %}
+        <span class="badge bg-azure-lt">{{ asset.category.code }}</span>
+        {{ asset.category.name }}
+        {% else %}—{% endif %}
+    </td>
+    <td>{{ asset.unit }}</td>
+    <td>
+        {% if asset.is_active %}
+        <span class="badge bg-success">Active</span>
+        {% else %}
+        <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+    </td>
+    {% if current_user.role.value == "KREIS_ADMIN" %}
+    <td>
+        <a href="/assets/{{ asset.id }}/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+        {% if asset.is_active %}
+        <form method="post" action="/assets/{{ asset.id }}/deactivate" class="d-inline"
+              onsubmit="return confirm('Deactivate {{ asset.name }}?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+        </form>
+        {% endif %}
+    </td>
+    {% endif %}
+</tr>
+{% else %}
+<tr>
+    <td colspan="5" class="text-center text-muted">No assets found.</td>
+</tr>
+{% endfor %}

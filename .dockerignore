@@ -1,0 +1,10 @@
+```text id="98js4d"
+venv
+__pycache__
+*.pyc
+.env
+.git
+.idea
+.vscode
+tests
+```

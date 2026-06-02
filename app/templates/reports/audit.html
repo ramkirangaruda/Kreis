@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log — KREIS IMS{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Audit Log</h2>
+            <div class="text-muted">{{ total }} record{{ "s" if total != 1 else "" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" action="/reports/audit" class="row g-2 align-items-end w-100">
+            <div class="col-auto">
+                <label class="form-label">Action</label>
+                <select name="action" class="form-select">
+                    <option value="">All</option>
+                    {% for a in actions %}
+                    <option value="{{ a }}" {% if selected_action == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label">Entity</label>
+                <select name="entity" class="form-select">
+                    <option value="">All</option>
+                    {% for e in entities %}
+                    <option value="{{ e }}" {% if selected_entity == e %}selected{% endif %}>{{ e }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label">User ID</label>
+                <input type="number" name="user_id" class="form-control"
+                       value="{{ selected_user_id or '' }}" placeholder="Any">
+            </div>
+            <div class="col-auto">
+                <label class="form-label">From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-auto">
+                <label class="form-label">To</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="/reports/audit" class="btn btn-link">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Entity ID</th>
+                    <th>IP Address</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="text-muted">{{ log.created_at.strftime("%d %b %Y %H:%M:%S") }}</td>
+                    <td>{{ log.user.full_name if log.user else "—" }}</td>
+                    <td>
+                        {% if log.user %}
+                        <span class="badge bg-blue-lt">{{ log.user.role.value }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td><span class="badge bg-purple-lt">{{ log.action }}</span></td>
+                    <td>{{ log.entity }}</td>
+                    <td>{{ log.entity_id }}</td>
+                    <td class="text-muted">{{ log.ip_address or "—" }}</td>
+                    <td>
+                        {% if log.details %}
+                        <details>
+                            <summary class="text-muted" style="cursor:pointer;">View</summary>
+                            <pre class="mb-0 mt-1" style="white-space:pre-wrap;">{{ log.details }}</pre>
+                        </details>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted">No audit records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pages > 1 %}
+    <div class="card-footer d-flex align-items-center">
+        <p class="m-0 text-muted">Page {{ page }} of {{ pages }}</p>
+        <ul class="pagination m-0 ms-auto">
+            {% set base = "/reports/audit?action=" ~ selected_action ~ "&entity=" ~ selected_entity ~ "&user_id=" ~ (selected_user_id or "") ~ "&date_from=" ~ date_from ~ "&date_to=" ~ date_to %}
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ base }}&page={{ page - 1 }}">Prev</a>
+            </li>
+            <li class="page-item {% if page >= pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ base }}&page={{ page + 1 }}">Next</a>
+            </li>
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

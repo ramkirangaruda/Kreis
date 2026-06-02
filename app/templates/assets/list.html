@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Assets{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Assets</h2></div>
+        {% if current_user.role.value == "KREIS_ADMIN" %}
+        <div class="col-auto ms-auto">
+            <a href="/assets/new" class="btn btn-primary">Add Asset</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{# Category tabs #}
+<div class="card mb-0">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a class="nav-link {% if not selected_category_id %}active{% endif %}"
+                   href="/assets/"
+                   hx-get="/assets/"
+                   hx-trigger="click"
+                   hx-target="#asset-table"
+                   hx-push-url="true">All</a>
+            </li>
+            {% for cat in categories %}
+            <li class="nav-item">
+                <a class="nav-link {% if selected_category_id == cat.id %}active{% endif %}"
+                   href="/assets/?category_id={{ cat.id }}"
+                   hx-get="/assets/?category_id={{ cat.id }}"
+                   hx-trigger="click"
+                   hx-target="#asset-table"
+                   hx-push-url="true"
+                   title="{{ cat.name }}">{{ cat.code }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card-header border-0 pt-2">
+        <input type="text" name="search" value="{{ search }}"
+               class="form-control col-md-4"
+               placeholder="Search assets…"
+               hx-get="/assets/"
+               hx-trigger="keyup changed delay:300ms"
+               hx-target="#asset-table"
+               hx-include="[name=category_id_hidden]">
+        {% if selected_category_id %}
+        <input type="hidden" name="category_id_hidden" value="{{ selected_category_id }}">
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Unit</th>
+                    <th>Status</th>
+                    {% if current_user.role.value == "KREIS_ADMIN" %}
+                    <th class="w-1">Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody id="asset-table">
+                {% include "partials/asset_table.html" %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

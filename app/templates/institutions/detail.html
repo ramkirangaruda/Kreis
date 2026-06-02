@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ institution.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/institutions/" class="btn btn-outline-secondary btn-sm">← Back</a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">{{ institution.name }}</h2>
+            <div class="text-muted">Code: <code>{{ institution.code }}</code> · {{ institution.district }}</div>
+        </div>
+        {% if current_user.role.value == "KREIS_ADMIN" %}
+        <div class="col-auto">
+            <a href="/institutions/{{ institution.id }}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+            {% if institution.is_active %}
+            <form method="post" action="/institutions/{{ institution.id }}/deactivate" class="d-inline"
+                  onsubmit="return confirm('Deactivate this institution?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Deactivate</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row row-cards mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Details</h3>
+                <dl class="row">
+                    <dt class="col-5">Address</dt>
+                    <dd class="col-7">{{ institution.address }}</dd>
+                    <dt class="col-5">Status</dt>
+                    <dd class="col-7">
+                        {% if institution.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </dd>
+                    <dt class="col-5">Staff</dt>
+                    <dd class="col-7">{{ users | length }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Stock Summary #}
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Stock Summary</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Asset</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-end">Available</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category, items in inventory_grouped.items() %}
+                {% for item in items %}
+                <tr>
+                    {% if loop.first %}
+                    <td rowspan="{{ items | length }}" class="text-muted fw-bold align-middle">{{ category }}</td>
+                    {% endif %}
+                    <td>{{ item.asset.name if item.asset else "—" }}</td>
+                    <td class="text-end">{{ item.quantity_total }}</td>
+                    <td class="text-end">{{ item.quantity_available }}</td>
+                    <td>
+                        {% if item.quantity_available <= item.low_stock_threshold %}
+                        <span class="badge bg-warning text-dark">Low Stock</span>
+                        {% else %}
+                        <span class="badge bg-success">Normal</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted">No inventory items.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# Users #}
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Staff</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Name</th><th>Email</th><th>Role</th></tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.full_name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td><span class="badge bg-blue-lt">{{ user.role.value }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted">No users.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# Recent Movements #}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Movements</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Date</th><th>Type</th><th>Asset</th><th class="text-end">Qty</th></tr>
+            </thead>
+            <tbody>
+                {% for m in movements %}
+                <tr>
+                    <td class="text-muted">{{ m.created_at.strftime("%d %b %Y %H:%M") }}</td>
+                    <td>
+                        {% set mt = m.movement_type.value %}
+                        {% if mt == "ISSUE" %}<span class="badge bg-red-lt">Issue</span>
+                        {% elif mt == "RETURN" %}<span class="badge bg-green-lt">Return</span>
+                        {% elif mt == "TRANSFER" %}<span class="badge bg-yellow-lt">Transfer</span>
+                        {% elif mt == "RECEIPT" %}<span class="badge bg-blue-lt">Receipt</span>
+                        {% else %}<span class="badge bg-secondary">{{ mt }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.item.asset.name if m.item and m.item.asset else "—" }}</td>
+                    <td class="text-end">{{ m.quantity }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">No movements.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

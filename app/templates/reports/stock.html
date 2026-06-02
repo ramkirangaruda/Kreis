@@ -8,28 +8,38 @@ Stock Report
 
 <h1>Stock Report</h1>
 
+<a href="/reports/stock?format=xlsx" class="btn btn-success mb-3">
+    Export to Excel
+</a>
+
 <table class="table table-bordered">
 
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Asset ID</th>
-            <th>Institution ID</th>
+            <th>Institution</th>
+            <th>Asset</th>
+            <th>Category</th>
             <th>Total</th>
             <th>Available</th>
-            <th>Location</th>
+            <th>Status</th>
         </tr>
     </thead>
 
     <tbody>
         {% for item in data %}
-        <tr>
-            <td>{{ item.id }}</td>
-            <td>{{ item.asset_id }}</td>
-            <td>{{ item.institution_id }}</td>
-            <td>{{ item.quantity_total }}</td>
-            <td>{{ item.quantity_available }}</td>
-            <td>{{ item.location }}</td>
+        <tr class="{% if item.status == 'Low Stock' %}table-warning{% endif %}">
+            <td>{{ item.institution }}</td>
+            <td>{{ item.asset }}</td>
+            <td>{{ item.category }}</td>
+            <td>{{ item.total }}</td>
+            <td>{{ item.available }}</td>
+            <td>
+                {% if item.status == "Low Stock" %}
+                <span class="badge bg-warning text-dark">Low Stock</span>
+                {% else %}
+                <span class="badge bg-success">Normal</span>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

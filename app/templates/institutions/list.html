@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Institutions{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Institutions</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a href="/institutions/new" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                    stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Institution
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if success %}
+<div class="alert alert-success alert-dismissible" role="alert">
+    {{ success }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2">
+            <div class="col">
+                <input type="text" name="search" value="{{ search }}"
+                       class="form-control"
+                       placeholder="Search by name…"
+                       hx-get="/institutions/"
+                       hx-trigger="keyup changed delay:300ms"
+                       hx-target="#institution-table"
+                       hx-include="[name=district]">
+            </div>
+            <div class="col-auto">
+                <select name="district" class="form-select"
+                        hx-get="/institutions/"
+                        hx-trigger="change"
+                        hx-target="#institution-table"
+                        hx-include="[name=search]">
+                    <option value="">All Districts</option>
+                    {% for d in districts %}
+                    <option value="{{ d }}" {% if d == district %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>District</th>
+                    <th>Status</th>
+                    <th class="w-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="institution-table">
+                {% include "partials/institution_table.html" %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

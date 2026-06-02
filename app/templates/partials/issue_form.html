@@ -1,0 +1,51 @@
+<div class="modal modal-blur fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.4);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Issue Asset</h5>
+                <button type="button" class="btn-close"
+                        onclick="document.getElementById('modal-container').innerHTML=''"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    {{ item.asset.name if item.asset else "Asset" }} —
+                    Available: <strong>{{ item.quantity_available }}</strong>
+                </p>
+
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form hx-post="/inventory/issue"
+                      hx-target="#modal-container" hx-swap="innerHTML">
+
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="inventory_item_id" value="{{ item.id }}">
+
+                    <div class="mb-3">
+                        <label class="form-label required">Quantity</label>
+                        <input type="number" name="quantity" class="form-control"
+                               min="1" max="{{ item.quantity_available }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label required">Issued To</label>
+                        <input type="text" name="issued_to" class="form-control"
+                               placeholder="Student / staff name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-link"
+                                onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Issue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

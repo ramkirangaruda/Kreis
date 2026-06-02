@@ -22,7 +22,7 @@ target_metadata = Base.metadata
 def run_migrations_offline() -> None:
     """Run migrations in offline mode."""
 
-    url = settings.database_url.replace("+asyncpg", "")
+    url = settings.database_url.replace("+asyncpg", "+psycopg2")
 
     context.configure(
         url=url,
@@ -40,7 +40,7 @@ def run_migrations_online() -> None:
 
     config.set_main_option(
         "sqlalchemy.url",
-        settings.database_url.replace("+asyncpg", "")
+        settings.database_url.replace("+asyncpg", "+psycopg2")
     )
 
     connectable = engine_from_config(

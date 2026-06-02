@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import mapped_column
 from sqlalchemy import String, Boolean, DateTime, func
 from app.core.database import Base
 
@@ -41,4 +42,14 @@ class Institution(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now()
+    )
+
+    users: Mapped[list["User"]] = relationship(
+        back_populates="institution",
+        lazy="selectin"
+    )
+
+    inventory: Mapped[list["InventoryItem"]] = relationship(
+        back_populates="institution",
+        lazy="selectin"
     )

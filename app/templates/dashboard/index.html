@@ -1,21 +1,197 @@
 {% extends "base.html" %}
 
-{% block title %}
-Dashboard
-{% endblock %}
+{% block title %}Dashboard — KREIS IMS{% endblock %}
 
 {% block content %}
 
-<h1>KREIS IMS Dashboard</h1>
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
 
-<p>Welcome {{ current_user.full_name }}</p>
+<div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Dashboard</h2>
+            <div class="text-muted">Welcome back, {{ current_user.full_name }}</div>
+        </div>
+    </div>
+</div>
 
-<h2>Stats</h2>
+{# ── Metric cards ─────────────────────────────────────────── #}
+<div class="row row-cards mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-sm">
+            <div class="card-body">
+                <div class="subheader">Total Institutions</div>
+                <div class="h1 mb-0">{{ stats.total_institutions }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-sm">
+            <div class="card-body">
+                <div class="subheader">Total Assets</div>
+                <div class="h1 mb-0">{{ stats.total_assets }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-sm {% if stats.low_stock_count > 0 %}border-danger{% endif %}">
+            <div class="card-body">
+                <div class="subheader">Low Stock Alerts</div>
+                <div class="h1 mb-0 {% if stats.low_stock_count > 0 %}text-danger{% endif %}">
+                    {{ stats.low_stock_count }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-sm">
+            <div class="card-body">
+                <div class="subheader">Pending Transfers</div>
+                <div class="h1 mb-0">{{ stats.pending_transfers }}</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<ul>
-    <li>Total Schools: {{ stats.total_schools }}</li>
-    <li>Total Assets: {{ stats.total_assets }}</li>
-    <li>Low Stock Items: {{ stats.low_stock }}</li>
-</ul>
+{# ── Low stock alert list ─────────────────────────────────── #}
+{% if stats.low_stock_items %}
+<div class="card mb-4 border-danger">
+    <div class="card-header">
+        <h3 class="card-title text-danger">⚠ Low Stock Alerts</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    {% if is_admin %}<th>Institution</th>{% endif %}
+                    <th class="text-end">Available</th>
+                    <th class="text-end">Threshold</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stats.low_stock_items %}
+                <tr>
+                    <td>{{ item.asset.name if item.asset else "—" }}</td>
+                    {% if is_admin %}
+                    <td>{{ item.institution.name if item.institution else "—" }}</td>
+                    {% endif %}
+                    <td class="text-end">
+                        <span class="badge {% if item.quantity_available == 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            {{ item.quantity_available }}
+                        </span>
+                    </td>
+                    <td class="text-end text-muted">{{ item.low_stock_threshold }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="row row-cards">
+
+    {# ── School stock status (admin) / institution summary ── #}
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if is_admin %}School Stock Status{% else %}My Institution{% endif %}
+                </h3>
+                {% if is_admin %}
+                <div class="ms-auto">
+                    <select name="district" class="form-select form-select-sm"
+                            hx-get="/dashboard/partials/schools"
+                            hx-trigger="change"
+                            hx-target="#school-table">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                        <option value="{{ district }}">{{ district }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+            <div id="school-table">
+                {% include "partials/school_table.html" %}
+            </div>
+        </div>
+    </div>
+
+    {# ── Category breakdown ────────────────────────────────── #}
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Category Breakdown</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-end">Total Items</th>
+                            <th class="text-end">% of Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in stats.category_breakdown %}
+                        <tr>
+                            <td>{{ row.name }}</td>
+                            <td class="text-end">{{ row.total }}</td>
+                            <td class="text-end text-muted">{{ row.percentage }}%</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted">No stock data.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Recent activity feed ─────────────────────────────────── #}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Activity</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Asset</th>
+                    {% if is_admin %}<th>Institution</th>{% endif %}
+                    <th class="text-end">Qty</th>
+                    <th>By</th>
+                    <th>When</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in stats.recent_movements %}
+                <tr>
+                    <td>
+                        {% set mt = m.movement_type %}
+                        {% if mt == "ISSUE" %}<span class="badge bg-red-lt">Issue</span>
+                        {% elif mt == "RETURN" %}<span class="badge bg-green-lt">Return</span>
+                        {% elif mt == "TRANSFER" %}<span class="badge bg-yellow-lt">Transfer</span>
+                        {% elif mt == "RECEIPT" %}<span class="badge bg-blue-lt">Receipt</span>
+                        {% else %}<span class="badge bg-secondary">{{ mt }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.asset }}</td>
+                    {% if is_admin %}<td>{{ m.institution }}</td>{% endif %}
+                    <td class="text-end">{{ m.quantity }}</td>
+                    <td>{{ m.performed_by }}</td>
+                    <td class="text-muted">{{ m.created_at | timeago }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="{% if is_admin %}6{% else %}5{% endif %}" class="text-center text-muted">No recent activity.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
 {% endblock %}

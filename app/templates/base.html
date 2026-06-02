@@ -24,23 +24,21 @@
 
                 <nav class="navbar-nav">
 
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+
+                    <a class="nav-link" href="/inventory/">Inventory</a>
+
+                    <a class="nav-link" href="/assets/">Assets</a>
+
+                    <a class="nav-link" href="/reports/stock">Reports</a>
+
                     {% if current_user.role.value == "KREIS_ADMIN" %}
-                    <a class="nav-link" href="/institutions">
-                        Institutions
-                    </a>
+                    <a class="nav-link" href="/institutions/">Institutions</a>
+                    <a class="nav-link" href="/users/">Users</a>
+                    <a class="nav-link" href="/reports/audit">Audit Log</a>
                     {% endif %}
 
-                    <a class="nav-link" href="/inventory">
-                        Inventory
-                    </a>
-
-                    <a class="nav-link" href="/reports/stock">
-                        Reports
-                    </a>
-
-                    <a class="nav-link" href="/dashboard">
-                        Dashboard
-                    </a>
+                    <a class="nav-link text-danger" href="/logout">Logout</a>
 
                 </nav>
 
@@ -59,6 +57,8 @@
         </div>
 
     </div>
+
+    <div id="modal-container"></div>
 
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 

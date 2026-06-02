@@ -1,21 +1,69 @@
-version: "3.9"
-
 services:
+
+  app:
+    build: .
+
+    container_name: kreis-app
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kreis:password@postgres:5432/kreis_ims
+      REDIS_URL: redis://redis:6379
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    restart: unless-stopped
+
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+
+    volumes:
+      - .:/app
+
   postgres:
     image: postgres:15
+
+    container_name: kreis-postgres
+
     environment:
       POSTGRES_USER: kreis
       POSTGRES_PASSWORD: password
       POSTGRES_DB: kreis_ims
-    ports:
-      - "5433:5432"
+
+    # No published port — the database is only reachable on the internal
+    # Docker network, not from the host / public internet.
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kreis -d kreis_ims"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
+
+    container_name: kreis-redis
+
     ports:
       - "6379:6379"
 
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+

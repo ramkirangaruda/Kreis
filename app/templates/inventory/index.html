@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory — KREIS IMS{% endblock %}
+
+{% block content %}
+
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Inventory</h2></div>
+        <div class="col-auto ms-auto">
+            <a href="/inventory/movements" class="btn btn-outline-secondary">Movement History</a>
+        </div>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <select name="category_id" class="form-select"
+                        hx-get="/inventory/"
+                        hx-trigger="change"
+                        hx-target="#inventory-table"
+                        hx-swap="outerHTML"
+                        hx-include="[name=institution_id]">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}"
+                        {% if selected_category_id == cat.id %}selected{% endif %}>
+                        {{ cat.code }} — {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if is_admin %}
+            <div class="col-auto">
+                <select name="institution_id" class="form-select"
+                        hx-get="/inventory/"
+                        hx-trigger="change"
+                        hx-target="#inventory-table"
+                        hx-swap="outerHTML"
+                        hx-include="[name=category_id]">
+                    <option value="">All Institutions</option>
+                    {% for inst in institutions %}
+                    <option value="{{ inst.id }}"
+                        {% if selected_institution_id == inst.id %}selected{% endif %}>
+                        {{ inst.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include "partials/inventory_table.html" %}
+</div>
+
+{% endblock %}

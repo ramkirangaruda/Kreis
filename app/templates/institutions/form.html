@@ -1,39 +1,67 @@
 {% extends "base.html" %}
 
-{% block title %}
-New Institution
-{% endblock %}
+{% block title %}{% if institution %}Edit Institution{% else %}New Institution{% endif %}{% endblock %}
 
 {% block content %}
-
-<h1>Create Institution</h1>
-
-<form method="post">
-
-    <div class="mb-3">
-        <label>Name</label>
-        <input type="text" name="name" class="form-control" required>
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/institutions/" class="btn btn-outline-secondary btn-sm">← Back</a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">
+                {% if institution %}Edit Institution{% else %}New Institution{% endif %}
+            </h2>
+        </div>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label>Code</label>
-        <input type="text" name="code" class="form-control" required>
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card col-md-7">
+    <div class="card-body">
+        <form method="post"
+              action="{% if institution %}/institutions/{{ institution.id }}/edit{% else %}/institutions/{% endif %}">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+                <label class="form-label required">Institution Name</label>
+                <input type="text" name="name" class="form-control"
+                       value="{{ institution.name if institution else (form_data.name if form_data else '') }}"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Code</label>
+                <input type="text" name="code" class="form-control"
+                       value="{{ institution.code if institution else (form_data.code if form_data else '') }}"
+                       maxlength="20" required
+                       style="text-transform:uppercase">
+                <small class="text-muted">Unique short identifier (e.g. GHS001)</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">District</label>
+                <input type="text" name="district" class="form-control"
+                       value="{{ institution.district if institution else (form_data.district if form_data else '') }}"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Address</label>
+                <textarea name="address" class="form-control" rows="3" required>{{ institution.address if institution else (form_data.address if form_data else '') }}</textarea>
+            </div>
+
+            <div class="form-footer">
+                <button type="submit" class="btn btn-primary">
+                    {% if institution %}Save Changes{% else %}Create Institution{% endif %}
+                </button>
+                <a href="/institutions/" class="btn btn-outline-secondary ms-2">Cancel</a>
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label>District</label>
-        <input type="text" name="district" class="form-control" required>
-    </div>
-
-    <div class="mb-3">
-        <label>Address</label>
-        <textarea name="address" class="form-control" required></textarea>
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-        Create
-    </button>
-
-</form>
-
+</div>
 {% endblock %}

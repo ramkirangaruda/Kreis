@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import relationship
 from sqlalchemy import (
     String,
     Integer,
@@ -25,6 +26,15 @@ class MovementType(enum.Enum):
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
 
+    asset: Mapped["Asset"] = relationship(
+        back_populates="inventory",
+        lazy="selectin"
+    )
+
+    institution: Mapped["Institution"] = relationship(
+        back_populates="inventory",
+        lazy="selectin"
+    )
     id: Mapped[int] = mapped_column(
         primary_key=True
     )
@@ -49,6 +59,7 @@ class InventoryItem(Base):
 
     low_stock_threshold: Mapped[int] = mapped_column(
         Integer,
+        nullable=False,
         default=10
     )
 
@@ -57,9 +68,19 @@ class InventoryItem(Base):
         nullable=True
     )
 
+    movements: Mapped[list["AssetMovement"]] = relationship(
+        back_populates="item",
+        lazy="selectin"
+    )
+
 
 class AssetMovement(Base):
     __tablename__ = "asset_movements"
+
+    item: Mapped["InventoryItem"] = relationship(
+        back_populates="movements",
+        lazy="selectin"
+    )
 
     id: Mapped[int] = mapped_column(
         primary_key=True

@@ -1,0 +1,67 @@
+<div id="inventory-table" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
+    {% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+    {% set can_transfer = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr>
+                    <th>Asset Name</th>
+                    <th>Category</th>
+                    {% if is_admin %}<th>Institution</th>{% endif %}
+                    <th class="text-end">Total</th>
+                    <th class="text-end">Available</th>
+                    <th>Status</th>
+                    <th class="w-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.asset.name if item.asset else "—" }}</td>
+                    <td>
+                        {% if item.asset and item.asset.category %}
+                        <span class="badge bg-azure-lt">{{ item.asset.category.code }}</span>
+                        {{ item.asset.category.name }}
+                        {% else %}—{% endif %}
+                    </td>
+                    {% if is_admin %}
+                    <td>{{ item.institution.name if item.institution else "—" }}</td>
+                    {% endif %}
+                    <td class="text-end">{{ item.quantity_total }}</td>
+                    <td class="text-end">{{ item.quantity_available }}</td>
+                    <td>
+                        {% if item.quantity_available == 0 %}
+                        <span class="badge bg-danger">Critical</span>
+                        {% elif item.quantity_available <= item.low_stock_threshold %}
+                        <span class="badge bg-warning text-dark">Low</span>
+                        {% else %}
+                        <span class="badge bg-success">Good</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-list flex-nowrap">
+                            <button hx-get="/inventory/{{ item.id }}/issue-form"
+                                    hx-target="#modal-container" hx-swap="innerHTML"
+                                    class="btn btn-sm btn-primary">Issue</button>
+                            <button hx-get="/inventory/{{ item.id }}/return-form"
+                                    hx-target="#modal-container" hx-swap="innerHTML"
+                                    class="btn btn-sm btn-outline-secondary">Return</button>
+                            {% if can_transfer %}
+                            <button hx-get="/inventory/{{ item.id }}/transfer-form"
+                                    hx-target="#modal-container" hx-swap="innerHTML"
+                                    class="btn btn-sm btn-outline-warning">Transfer</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{% if is_admin %}7{% else %}6{% endif %}" class="text-center text-muted">
+                        No inventory items found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,56 @@
+<div class="modal modal-blur fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.4);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Transfer Asset</h5>
+                <button type="button" class="btn-close"
+                        onclick="document.getElementById('modal-container').innerHTML=''"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    {{ item.asset.name if item.asset else "Asset" }} —
+                    Available: <strong>{{ item.quantity_available }}</strong>
+                    {% if item.institution %}<br>From: {{ item.institution.name }}{% endif %}
+                </p>
+
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form hx-post="/inventory/transfer"
+                      hx-target="#modal-container" hx-swap="innerHTML">
+
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="from_item_id" value="{{ item.id }}">
+
+                    <div class="mb-3">
+                        <label class="form-label required">Destination Institution</label>
+                        <select name="to_institution_id" class="form-select" required>
+                            <option value="">Select institution</option>
+                            {% for inst in institutions %}
+                            <option value="{{ inst.id }}">{{ inst.name }} ({{ inst.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label required">Quantity</label>
+                        <input type="number" name="quantity" class="form-control"
+                               min="1" max="{{ item.quantity_available }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-link"
+                                onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Transfer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

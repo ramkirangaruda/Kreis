@@ -1,0 +1,48 @@
+<div id="movement-table">
+    {% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Date/Time</th>
+                    <th>Type</th>
+                    <th>Asset</th>
+                    {% if is_admin %}<th>Institution</th>{% endif %}
+                    <th class="text-end">Quantity</th>
+                    <th>Performed By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movements %}
+                <tr>
+                    <td class="text-muted">{{ m.created_at.strftime("%d %b %Y %H:%M") }}</td>
+                    <td>
+                        {% set mt = m.movement_type %}
+                        {% if mt == "ISSUE" %}<span class="badge bg-red-lt">Issue</span>
+                        {% elif mt == "RETURN" %}<span class="badge bg-green-lt">Return</span>
+                        {% elif mt == "TRANSFER" %}<span class="badge bg-yellow-lt">Transfer</span>
+                        {% elif mt == "RECEIPT" %}<span class="badge bg-blue-lt">Receipt</span>
+                        {% else %}<span class="badge bg-secondary">{{ mt }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.asset }}</td>
+                    {% if is_admin %}<td>{{ m.institution }}</td>{% endif %}
+                    <td class="text-end">{{ m.quantity }}</td>
+                    <td>{{ m.performed_by }}</td>
+                    <td class="text-muted">
+                        {% if m.issued_to %}<div>To: {{ m.issued_to }}</div>{% endif %}
+                        {{ m.notes or "" }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{% if is_admin %}7{% else %}6{% endif %}" class="text-center text-muted">
+                        No movements found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

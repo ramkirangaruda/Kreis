@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_user %}Edit User{% else %}New User{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/users/" class="btn btn-outline-secondary btn-sm">← Back</a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">{% if edit_user %}Edit User{% else %}New User{% endif %}</h2>
+        </div>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card col-md-7">
+    <div class="card-body">
+        <form method="post"
+              action="{% if edit_user %}/users/{{ edit_user.id }}/edit{% else %}/users/{% endif %}">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+                <label class="form-label required">Full Name</label>
+                <input type="text" name="full_name" class="form-control"
+                       value="{{ edit_user.full_name if edit_user else (form_data.full_name if form_data else '') }}"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Email</label>
+                <input type="email" name="email" class="form-control"
+                       value="{{ edit_user.email if edit_user else (form_data.email if form_data else '') }}"
+                       required>
+            </div>
+
+            {% if not edit_user %}
+            <div class="mb-3">
+                <label class="form-label required">Password</label>
+                <input type="password" name="password" class="form-control"
+                       minlength="8" required>
+                <small class="text-muted">User will be prompted to change this on first login.</small>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label required">Role</label>
+                <select name="role" id="role" class="form-select"
+                        hx-get="/users/institution-field"
+                        hx-trigger="change"
+                        hx-target="#institution-field"
+                        hx-include="this"
+                        required>
+                    <option value="">Select role</option>
+                    {% for r in roles %}
+                    <option value="{{ r }}"
+                        {% if edit_user and edit_user.role.value == r %}selected
+                        {% elif form_data and form_data.role == r %}selected
+                        {% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# Institution field — shown when role is non-admin #}
+            <div id="institution-field">
+                {% set show_inst = (edit_user and edit_user.role.value != "KREIS_ADMIN") or (form_data and form_data.role != "KREIS_ADMIN" and form_data.role) %}
+                {% if show_inst or (not edit_user and not form_data) %}
+                <div class="mb-3">
+                    <label class="form-label required">Institution</label>
+                    <select name="institution_id" class="form-select"
+                            {% if show_inst %}required{% endif %}>
+                        <option value="">Select institution</option>
+                        {% for inst in institutions %}
+                        <option value="{{ inst.id }}"
+                            {% if edit_user and edit_user.institution_id == inst.id %}selected
+                            {% elif form_data and form_data.institution_id|string == inst.id|string %}selected
+                            {% endif %}>{{ inst.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-footer">
+                <button type="submit" class="btn btn-primary">
+                    {% if edit_user %}Save Changes{% else %}Create User{% endif %}
+                </button>
+                <a href="/users/" class="btn btn-outline-secondary ms-2">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

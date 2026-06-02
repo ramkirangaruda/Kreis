@@ -1,11 +1,44 @@
-<table border="1">
-    <tr>
-        <th>School</th>
-    </tr>
-
-    {% for school in schools %}
-    <tr>
-        <td>{{ school.name }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="table-responsive">
+    <table class="table table-vcenter card-table">
+        <thead>
+            <tr>
+                <th>Institution</th>
+                <th>District</th>
+                <th class="text-end">Total Stock</th>
+                <th class="text-end">Low Stock</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for school in schools %}
+            {% set total_stock = school.inventory | sum(attribute="quantity_total") %}
+            {% set ns = namespace(low=0) %}
+            {% for item in school.inventory %}
+                {% if item.quantity_available <= item.low_stock_threshold %}{% set ns.low = ns.low + 1 %}{% endif %}
+            {% endfor %}
+            {% set low_count = ns.low %}
+            <tr>
+                <td><a href="/institutions/{{ school.id }}">{{ school.name }}</a></td>
+                <td class="text-muted">{{ school.district }}</td>
+                <td class="text-end">{{ total_stock }}</td>
+                <td class="text-end">
+                    {% if low_count > 0 %}
+                    <span class="badge bg-danger">{{ low_count }}</span>
+                    {% else %}
+                    <span class="text-muted">0</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if low_count > 0 %}
+                    <span class="badge bg-warning text-dark">Needs Attention</span>
+                    {% else %}
+                    <span class="badge bg-success">Healthy</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted">No institutions found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

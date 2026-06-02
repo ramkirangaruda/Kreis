@@ -1,0 +1,30 @@
+{% for inst in institutions %}
+<tr>
+    <td>
+        <a href="/institutions/{{ inst.id }}">{{ inst.name }}</a>
+    </td>
+    <td><code>{{ inst.code }}</code></td>
+    <td>{{ inst.district }}</td>
+    <td>
+        {% if inst.is_active %}
+        <span class="badge bg-success">Active</span>
+        {% else %}
+        <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+    </td>
+    <td>
+        <a href="/institutions/{{ inst.id }}/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+        {% if inst.is_active %}
+        <form method="post" action="/institutions/{{ inst.id }}/deactivate" class="d-inline"
+              onsubmit="return confirm('Deactivate {{ inst.name }}?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+        </form>
+        {% endif %}
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="5" class="text-center text-muted">No institutions found.</td>
+</tr>
+{% endfor %}

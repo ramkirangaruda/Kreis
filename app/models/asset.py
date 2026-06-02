@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     String,
     Boolean,
@@ -31,9 +31,19 @@ class AssetCategory(Base):
         nullable=True
     )
 
+    assets: Mapped[list["Asset"]] = relationship(
+        back_populates="category",
+        lazy="selectin"
+    )
+
 
 class Asset(Base):
     __tablename__ = "assets"
+
+    category: Mapped["AssetCategory"] = relationship(
+        back_populates="assets",
+        lazy="selectin"
+    )
 
     id: Mapped[int] = mapped_column(
         primary_key=True
@@ -61,4 +71,9 @@ class Asset(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True
+    )
+
+    inventory: Mapped[list["InventoryItem"]] = relationship(
+        back_populates="asset",
+        lazy="selectin"
     )

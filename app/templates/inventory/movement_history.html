@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Movement History — KREIS IMS{% endblock %}
+
+{% block content %}
+
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Movement History</h2></div>
+        <div class="col-auto ms-auto">
+            <a href="/inventory/" class="btn btn-outline-secondary">← Inventory</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <select name="movement_type" class="form-select"
+                        hx-get="/inventory/movements"
+                        hx-trigger="change"
+                        hx-target="#movement-table"
+                        hx-swap="outerHTML"
+                        hx-include="[name=days],[name=institution_id]">
+                    <option value="">All Types</option>
+                    {% for t in movement_types %}
+                    <option value="{{ t }}" {% if selected_type == t %}selected{% endif %}>{{ t|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="days" class="form-select"
+                        hx-get="/inventory/movements"
+                        hx-trigger="change"
+                        hx-target="#movement-table"
+                        hx-swap="outerHTML"
+                        hx-include="[name=movement_type],[name=institution_id]">
+                    <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if selected_days == 90 %}selected{% endif %}>Last 90 days</option>
+                    <option value="0" {% if selected_days == 0 %}selected{% endif %}>All time</option>
+                </select>
+            </div>
+            {% if is_admin %}
+            <div class="col-auto">
+                <select name="institution_id" class="form-select"
+                        hx-get="/inventory/movements"
+                        hx-trigger="change"
+                        hx-target="#movement-table"
+                        hx-swap="outerHTML"
+                        hx-include="[name=movement_type],[name=days]">
+                    <option value="">All Institutions</option>
+                    {% for inst in institutions %}
+                    <option value="{{ inst.id }}"
+                        {% if selected_institution_id == inst.id %}selected{% endif %}>{{ inst.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include "partials/movement_table.html" %}
+</div>
+
+{% endblock %}

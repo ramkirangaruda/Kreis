@@ -1,37 +1,52 @@
-from fastapi import APIRouter, Request, Depends
-from fastapi.templating import Jinja2Templates
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_db
-from app.core.dependencies import get_current_user
-
-from app.models.inventory import InventoryItem
-
-router = APIRouter()
-
-templates = Jinja2Templates(directory="app/templates")
+from openpyxl import Workbook
+from fastapi.responses import StreamingResponse
+import io
 
 
-@router.get("/stock")
-async def stock_report(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
+def generate_excel_report(data):
 
-    result = await db.execute(
-        select(InventoryItem)
-    )
+    wb = Workbook()
 
-    data = result.scalars().all()
+    ws = wb.active
+    ws.title = "Stock Report"
 
-    return templates.TemplateResponse(
-        "reports/stock.html",
-        {
-            "request": request,
-            "data": data,
-            "current_user": current_user
+    headers = [
+        "Institution",
+        "Asset",
+        "Category",
+        "Total",
+        "Available",
+        "Status"
+    ]
+
+    ws.append(headers)
+
+    for row in data:
+
+        ws.append([
+            row["institution"],
+            row["asset"],
+            row["category"],
+            row["total"],
+            row["available"],
+            row["status"]
+        ])
+
+    buffer = io.BytesIO()
+
+    wb.save(buffer)
+
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        headers={
+            "Content-Disposition":
+            "attachment; filename=stock_report.xlsx"
         }
     )

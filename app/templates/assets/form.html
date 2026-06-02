@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{% if asset %}Edit Asset{% else %}New Asset{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/assets/" class="btn btn-outline-secondary btn-sm">← Back</a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">{% if asset %}Edit Asset{% else %}New Asset{% endif %}</h2>
+        </div>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card col-md-6">
+    <div class="card-body">
+        <form method="post"
+              action="{% if asset %}/assets/{{ asset.id }}/edit{% else %}/assets/{% endif %}">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+                <label class="form-label required">Asset Name</label>
+                <input type="text" name="name" class="form-control"
+                       value="{{ asset.name if asset else (form_data.name if form_data else '') }}"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Category</label>
+                <select name="category_id" class="form-select" required>
+                    <option value="">Select category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}"
+                        {% if asset and asset.category_id == cat.id %}selected
+                        {% elif form_data and form_data.category_id|string == cat.id|string %}selected
+                        {% endif %}>
+                        {{ cat.code }} — {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Unit of Measure</label>
+                <input type="text" name="unit" class="form-control"
+                       value="{{ asset.unit if asset else (form_data.unit if form_data else '') }}"
+                       placeholder="e.g. Nos, Sets, Pairs"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="2">{{ asset.description if asset else (form_data.description if form_data else '') }}</textarea>
+            </div>
+
+            <div class="form-footer">
+                <button type="submit" class="btn btn-primary">
+                    {% if asset %}Save Changes{% else %}Create Asset{% endif %}
+                </button>
+                <a href="/assets/" class="btn btn-outline-secondary ms-2">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
