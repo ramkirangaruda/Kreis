@@ -18,7 +18,8 @@ async def list_categories(db: AsyncSession) -> list:
 async def list_assets(
     db: AsyncSession,
     category_id: int | None = None,
-    search: str = ""
+    search: str = "",
+    show_inactive: bool = False,
 ) -> list:
     query = (
         select(Asset)
@@ -26,6 +27,8 @@ async def list_assets(
         .order_by(Asset.name)
     )
 
+    if not show_inactive:
+        query = query.where(Asset.is_active.is_(True))
     if category_id:
         query = query.where(Asset.category_id == category_id)
     if search:

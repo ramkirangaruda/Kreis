@@ -58,27 +58,33 @@
                     </td>
                     <td>{{ user.institution.name if user.institution else "—" }}</td>
                     <td>
-                        {% if user.is_active %}
-                        <span class="badge bg-success">Active</span>
-                        {% else %}
-                        <span class="badge bg-secondary">Inactive</span>
+                        {% if not user.is_active %}
+                        <span class="text-muted">Deactivated</span>
                         {% endif %}
-                        {% if user.password_change_required %}
+                        {% if user.password_change_required and user.is_active %}
                         <span class="badge bg-warning text-dark">Pwd Reset</span>
                         {% endif %}
                     </td>
                     <td>
                         <a href="/users/{{ user.id }}/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        {% if user.is_active %}
                         <form method="post" action="/users/{{ user.id }}/reset-password" class="d-inline"
                               onsubmit="return confirm('Reset password for {{ user.full_name }}?')">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-sm btn-outline-warning">Reset Pwd</button>
                         </form>
-                        {% if user.is_active and user.id != current_user.id %}
+                        {% if user.id != current_user.id %}
                         <form method="post" action="/users/{{ user.id }}/deactivate" class="d-inline"
                               onsubmit="return confirm('Deactivate {{ user.full_name }}?')">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                        </form>
+                        {% endif %}
+                        {% else %}
+                        <form method="post" action="/users/{{ user.id }}/reactivate" class="d-inline"
+                              onsubmit="return confirm('Reactivate {{ user.full_name }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-success">Reactivate</button>
                         </form>
                         {% endif %}
                     </td>

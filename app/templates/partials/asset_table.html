@@ -9,10 +9,8 @@
     </td>
     <td>{{ asset.unit }}</td>
     <td>
-        {% if asset.is_active %}
-        <span class="badge bg-success">Active</span>
-        {% else %}
-        <span class="badge bg-secondary">Inactive</span>
+        {% if not asset.is_active %}
+        <span class="text-muted">Inactive</span>
         {% endif %}
     </td>
     {% if current_user.role.value == "KREIS_ADMIN" %}

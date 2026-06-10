@@ -14,6 +14,7 @@ from app.services.users import (
     update_user,
     reset_password,
     deactivate_user,
+    reactivate_user,
 )
 from app.services.institutions import list_institutions
 
@@ -255,3 +256,20 @@ async def deactivate_user_route(
         return RedirectResponse(
             f"/users?error={str(exc)}", status_code=303
         )
+
+
+@router.post("/{user_id}/reactivate")
+async def reactivate_user_route(
+    user_id: int,
+    request: Request,
+    csrf_token: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(_ADMIN)
+):
+    if not validate_csrf_token(csrf_token):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    await reactivate_user(
+        db, user_id, current_user,
+        ip=request.client.host if request.client else None
+    )
+    return RedirectResponse("/users?success=User+reactivated.", status_code=303)

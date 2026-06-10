@@ -46,16 +46,31 @@
         </ul>
     </div>
 
-    <div class="card-header border-0 pt-2">
+    <div class="card-header border-0 pt-2 d-flex align-items-center gap-3">
         <input type="text" name="search" value="{{ search }}"
-               class="form-control col-md-4"
+               class="form-control"
+               style="max-width:300px"
                placeholder="Search assets…"
                hx-get="/assets/"
                hx-trigger="keyup changed delay:300ms"
                hx-target="#asset-table"
-               hx-include="[name=category_id_hidden]">
+               hx-include="[name=category_id_hidden],[name=show_inactive_hidden]">
         {% if selected_category_id %}
         <input type="hidden" name="category_id_hidden" value="{{ selected_category_id }}">
+        {% endif %}
+        <input type="hidden" name="show_inactive_hidden" value="{{ '1' if show_inactive else '' }}">
+        {% if current_user.role.value == "KREIS_ADMIN" %}
+        <label class="form-check form-switch mb-0 ms-auto">
+            <input class="form-check-input" type="checkbox"
+                   {% if show_inactive %}checked{% endif %}
+                   hx-get="/assets/"
+                   hx-trigger="change"
+                   hx-target="#asset-table"
+                   hx-include="[name=search],[name=category_id_hidden]"
+                   name="show_inactive"
+                   value="1">
+            <span class="form-check-label text-muted">Show inactive</span>
+        </label>
         {% endif %}
     </div>
 

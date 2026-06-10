@@ -25,13 +25,16 @@ _ADMIN = require_role(["KREIS_ADMIN"])
 @router.get("/", response_class=HTMLResponse)
 async def assets_list(
     request: Request,
-    category_id: int | None = None,
+    category_id: str | None = None,
     search: str = "",
+    show_inactive: str = "",
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    cat_id = int(category_id) if category_id else None
+    include_inactive = bool(show_inactive)
     categories = await list_categories(db)
-    assets = await list_assets(db, category_id=category_id, search=search)
+    assets = await list_assets(db, category_id=cat_id, search=search, show_inactive=include_inactive)
 
     if request.headers.get("HX-Request"):
         return templates.TemplateResponse(
@@ -46,8 +49,9 @@ async def assets_list(
             "categories": categories,
             "assets": assets,
             "current_user": current_user,
-            "selected_category_id": category_id,
+            "selected_category_id": cat_id,
             "search": search,
+            "show_inactive": include_inactive,
             "success": request.query_params.get("success", ""),
             "error": request.query_params.get("error", ""),
         }

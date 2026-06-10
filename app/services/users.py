@@ -171,3 +171,24 @@ async def deactivate_user(
         ip_address=ip
     )
     await db.commit()
+
+
+async def reactivate_user(
+    db: AsyncSession,
+    user_id: int,
+    current_user,
+    ip: str | None = None
+):
+    user = await get_user(db, user_id)
+    user.is_active = True
+
+    await log_action(
+        db=db,
+        user_id=current_user.id,
+        action="REACTIVATE_USER",
+        entity="User",
+        entity_id=user.id,
+        details={"email": user.email},
+        ip_address=ip
+    )
+    await db.commit()
