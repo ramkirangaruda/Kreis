@@ -24,6 +24,12 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-sm btn-outline-danger">Deactivate</button>
         </form>
+        {% else %}
+        <form method="post" action="/assets/{{ asset.id }}/reactivate" class="d-inline"
+              onsubmit="return confirm('Reactivate {{ asset.name }}?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-success">Reactivate</button>
+        </form>
         {% endif %}
     </td>
     {% endif %}

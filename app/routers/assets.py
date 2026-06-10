@@ -14,6 +14,7 @@ from app.services.assets import (
     create_asset,
     update_asset,
     deactivate_asset,
+    reactivate_asset,
 )
 
 router = APIRouter()
@@ -189,3 +190,20 @@ async def deactivate_asset_route(
         return RedirectResponse("/assets?success=Asset+deactivated.", status_code=303)
     except ValueError as exc:
         return RedirectResponse(f"/assets?error={str(exc)}", status_code=303)
+
+
+@router.post("/{asset_id}/reactivate")
+async def reactivate_asset_route(
+    asset_id: int,
+    request: Request,
+    csrf_token: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(_ADMIN)
+):
+    if not validate_csrf_token(csrf_token):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    await reactivate_asset(
+        db, asset_id, current_user,
+        ip=request.client.host if request.client else None
+    )
+    return RedirectResponse("/assets?success=Asset+reactivated.", status_code=303)

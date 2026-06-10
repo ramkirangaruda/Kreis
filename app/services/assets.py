@@ -157,3 +157,24 @@ async def deactivate_asset(
         ip_address=ip
     )
     await db.commit()
+
+
+async def reactivate_asset(
+    db: AsyncSession,
+    asset_id: int,
+    current_user,
+    ip: str | None = None
+):
+    asset = await get_asset(db, asset_id)
+    asset.is_active = True
+
+    await log_action(
+        db=db,
+        user_id=current_user.id,
+        action="REACTIVATE_ASSET",
+        entity="Asset",
+        entity_id=asset.id,
+        details={"name": asset.name},
+        ip_address=ip
+    )
+    await db.commit()
