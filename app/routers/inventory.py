@@ -244,6 +244,23 @@ async def return_form(
     )
 
 
+@router.get("/{item_id}/adjustment-form")
+async def adjustment_form(
+    item_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_role([UserRole.KREIS_ADMIN.value, UserRole.PRINCIPAL.value])),
+):
+    item = await db.get(InventoryItem, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Inventory item not found")
+
+    return templates.TemplateResponse(
+        "partials/adjustment_form.html",
+        {"request": request, "item": item, "current_user": current_user},
+    )
+
+
 @router.get("/{item_id}/transfer-form")
 async def transfer_form(
     item_id: int,
@@ -440,3 +457,79 @@ async def transfer_asset(
     items = await _scoped_items(db, current_user)
     return _table_response(request, items, current_user, oob=True,
                            toast=f"Transferred {quantity} item(s) successfully.")
+
+
+@router.post("/adjust")
+async def adjust_asset(
+    request: Request,
+    inventory_item_id: int = Form(...),
+    adjustment_type: str = Form(...),
+    quantity: int = Form(...),
+    notes: str = Form(...),
+    csrf_token: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_role([UserRole.KREIS_ADMIN.value, UserRole.PRINCIPAL.value])),
+):
+    if not validate_csrf_token(csrf_token):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
+    item = await db.get(InventoryItem, inventory_item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Inventory item not found")
+
+    try:
+        if quantity <= 0:
+            raise ValueError("Quantity must be greater than zero.")
+
+        if adjustment_type == "add":
+            item.quantity_total += quantity
+            item.quantity_available += quantity
+            delta = quantity
+        elif adjustment_type == "remove":
+            if quantity > item.quantity_available:
+                raise ValueError(
+                    f"Cannot remove {quantity} — only {item.quantity_available} available."
+                )
+            item.quantity_total -= quantity
+            item.quantity_available -= quantity
+            delta = -quantity
+        elif adjustment_type == "set":
+            issued_out = item.quantity_total - item.quantity_available
+            if quantity < issued_out:
+                raise ValueError(
+                    f"Cannot set total below {issued_out} — that many are currently issued out."
+                )
+            delta = quantity - item.quantity_total
+            item.quantity_total = quantity
+            item.quantity_available = quantity - issued_out
+        else:
+            raise ValueError("Invalid adjustment type.")
+
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "partials/adjustment_form.html",
+            {"request": request, "item": item, "current_user": current_user, "error": str(exc)},
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    db.add(AssetMovement(
+        inventory_item_id=inventory_item_id,
+        movement_type=MovementType.ADJUSTMENT,
+        quantity=abs(delta),
+        performed_by_id=current_user.id,
+        notes=notes,
+    ))
+    await log_action(
+        db=db,
+        user_id=current_user.id,
+        action="ADJUST_STOCK",
+        entity="InventoryItem",
+        entity_id=item.id,
+        details={"adjustment_type": adjustment_type, "quantity": quantity, "delta": delta},
+        ip_address=request.client.host if request.client else None,
+    )
+    await db.commit()
+
+    items = await _scoped_items(db, current_user)
+    return _table_response(request, items, current_user, oob=True,
+                           toast=f"Stock adjusted successfully (Δ {'+' if delta >= 0 else ''}{delta}).")

@@ -199,6 +199,9 @@ async def _generate_movements(db, principal_by_inst, institution_ids):
     if not items:
         return 0
 
+    # Build a lookup: (asset_id, institution_id) -> InventoryItem
+    item_map = {(i.asset_id, i.institution_id): i for i in items}
+
     types = [MovementType.ISSUE, MovementType.RETURN, MovementType.TRANSFER]
     now = datetime.utcnow()
     count = 0
@@ -227,11 +230,32 @@ async def _generate_movements(db, principal_by_inst, institution_ids):
             movement.notes = "Issued for classroom use"
         elif mtype == MovementType.RETURN:
             movement.notes = "Returned in good condition"
-        else:  # TRANSFER
+        else:  # TRANSFER — also generate the matching RECEIPT
             others = [i for i in institution_ids if i != item.institution_id]
-            movement.from_institution = item.institution_id
-            movement.to_institution = random.choice(others) if others else None
-            movement.notes = "Inter-school transfer"
+            if not others:
+                movement.movement_type = MovementType.ISSUE
+                movement.issued_to = random.choice(STUDENT_NAMES)
+                movement.notes = "Issued for classroom use"
+            else:
+                to_inst = random.choice(others)
+                movement.from_institution = item.institution_id
+                movement.to_institution = to_inst
+                movement.notes = "Inter-school transfer"
+
+                # Create the matching RECEIPT on the destination item
+                dest_item = item_map.get((item.asset_id, to_inst))
+                if dest_item:
+                    db.add(AssetMovement(
+                        inventory_item_id=dest_item.id,
+                        movement_type=MovementType.RECEIPT,
+                        quantity=qty,
+                        from_institution=item.institution_id,
+                        to_institution=to_inst,
+                        performed_by_id=performed_by,
+                        notes="Inter-school transfer — received",
+                        created_at=created_at,
+                    ))
+                    count += 1
 
         db.add(movement)
         count += 1

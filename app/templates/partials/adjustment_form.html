@@ -1,0 +1,53 @@
+<div class="modal modal-blur show d-block" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adjust Stock</h5>
+                <button type="button" class="btn-close"
+                        onclick="document.getElementById('modal-container').innerHTML=''"></button>
+            </div>
+            <form hx-post="/inventory/adjust"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">
+                <div class="modal-body">
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="inventory_item_id" value="{{ item.id }}">
+
+                    <p class="text-muted mb-3">
+                        <strong>{{ item.asset.name if item.asset else "Item" }}</strong><br>
+                        Current total: <strong>{{ item.quantity_total }}</strong> &nbsp;|&nbsp;
+                        Available: <strong>{{ item.quantity_available }}</strong>
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label">Adjustment type</label>
+                        <select name="adjustment_type" class="form-select" required>
+                            <option value="add">Add stock (found / received)</option>
+                            <option value="remove">Remove stock (lost / damaged)</option>
+                            <option value="set">Set exact total</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" name="quantity" class="form-control"
+                               min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span class="text-muted">(required)</span></label>
+                        <input type="text" name="notes" class="form-control"
+                               placeholder="e.g. 3 laptops damaged in flood" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link"
+                            onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Apply Adjustment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

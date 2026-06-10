@@ -1,6 +1,7 @@
 <div id="inventory-table" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
     {% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
     {% set can_transfer = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+    {% set can_adjust = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
     <div class="table-responsive">
         <table class="table table-vcenter table-bordered card-table">
             <thead>
@@ -50,6 +51,11 @@
                             <button hx-get="/inventory/{{ item.id }}/transfer-form"
                                     hx-target="#modal-container" hx-swap="innerHTML"
                                     class="btn btn-sm btn-outline-warning">Transfer</button>
+                            {% endif %}
+                            {% if can_adjust %}
+                            <button hx-get="/inventory/{{ item.id }}/adjustment-form"
+                                    hx-target="#modal-container" hx-swap="innerHTML"
+                                    class="btn btn-sm btn-outline-secondary">Adjust</button>
                             {% endif %}
                         </div>
                     </td>
