@@ -6,11 +6,11 @@
 
 {% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
 
-<div class="page-header d-print-none mb-3">
+<div class="page-header d-print-none">
     <div class="row align-items-center">
         <div class="col">
             <h2 class="page-title">Dashboard</h2>
-            <div class="text-muted">Welcome back, {{ current_user.full_name }}</div>
+            <div class="page-subtitle-text">Welcome back, {{ current_user.full_name }}</div>
         </div>
     </div>
 </div>
@@ -18,36 +18,38 @@
 {# ── Metric cards ─────────────────────────────────────────── #}
 <div class="row row-cards mb-4">
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-sm">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="subheader">Total Institutions</div>
-                <div class="h1 mb-0">{{ stats.total_institutions }}</div>
+                <div class="metric-icon metric-icon-blue"><i class="ti ti-building"></i></div>
+                <div class="metric-label">Total Institutions</div>
+                <div class="metric-value">{{ stats.total_institutions }}</div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-sm">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="subheader">Total Assets</div>
-                <div class="h1 mb-0">{{ stats.total_assets }}</div>
+                <div class="metric-icon metric-icon-purple"><i class="ti ti-package"></i></div>
+                <div class="metric-label">Total Assets</div>
+                <div class="metric-value">{{ stats.total_assets }}</div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-sm {% if stats.low_stock_count > 0 %}border-danger{% endif %}">
+        <div class="card metric-card {% if stats.low_stock_count > 0 %}metric-urgent{% endif %}">
             <div class="card-body">
-                <div class="subheader">Low Stock Alerts</div>
-                <div class="h1 mb-0 {% if stats.low_stock_count > 0 %}text-danger{% endif %}">
-                    {{ stats.low_stock_count }}
-                </div>
+                <div class="metric-icon metric-icon-red"><i class="ti ti-alert-triangle"></i></div>
+                <div class="metric-label">Low Stock Alerts</div>
+                <div class="metric-value">{{ stats.low_stock_count }}</div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-sm">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="subheader">Pending Transfers</div>
-                <div class="h1 mb-0">{{ stats.pending_transfers }}</div>
+                <div class="metric-icon metric-icon-amber"><i class="ti ti-arrows-exchange"></i></div>
+                <div class="metric-label">Pending Transfers</div>
+                <div class="metric-value">{{ stats.pending_transfers }}</div>
             </div>
         </div>
     </div>
@@ -55,9 +57,9 @@
 
 {# ── Low stock alert list ─────────────────────────────────── #}
 {% if stats.low_stock_items %}
-<div class="card mb-4 border-danger">
+<div class="card mb-4 panel-accent">
     <div class="card-header">
-        <h3 class="card-title text-danger">⚠ Low Stock Alerts</h3>
+        <h3 class="card-title"><i class="ti ti-alert-triangle text-warning"></i> Low Stock Alerts</h3>
     </div>
     <div class="table-responsive">
         <table class="table table-vcenter card-table">

@@ -2,6 +2,8 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
         {% block title %}
         KREIS IMS
@@ -9,9 +11,14 @@
     </title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
 </head>
 
 <body>
+
+    {% set path = request.url.path %}
+    {% set role = current_user.role.value if current_user else "" %}
 
     <div class="page">
 
@@ -22,24 +29,42 @@
                     KREIS IMS
                 </h1>
 
-                <nav class="navbar-nav">
+                <nav class="navbar-nav sidebar-main">
 
-                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                    <a class="nav-link {% if path.startswith('/dashboard') %}active{% endif %}" href="/dashboard">
+                        <i class="ti ti-layout-dashboard"></i> Dashboard
+                    </a>
 
-                    <a class="nav-link" href="/inventory/">Inventory</a>
+                    <a class="nav-link {% if path.startswith('/inventory') %}active{% endif %}" href="/inventory/">
+                        <i class="ti ti-box"></i> Inventory
+                    </a>
 
-                    <a class="nav-link" href="/assets/">Assets</a>
+                    <a class="nav-link {% if path.startswith('/assets') %}active{% endif %}" href="/assets/">
+                        <i class="ti ti-package"></i> Assets
+                    </a>
 
-                    <a class="nav-link" href="/reports/stock">Reports</a>
+                    <a class="nav-link {% if path.startswith('/reports/stock') %}active{% endif %}" href="/reports/stock">
+                        <i class="ti ti-chart-bar"></i> Reports
+                    </a>
 
-                    {% if current_user.role.value == "KREIS_ADMIN" %}
-                    <a class="nav-link" href="/institutions/">Institutions</a>
-                    <a class="nav-link" href="/users/">Users</a>
-                    <a class="nav-link" href="/reports/audit">Audit Log</a>
+                    {% if role == "KREIS_ADMIN" %}
+                    <a class="nav-link {% if path.startswith('/institutions') %}active{% endif %}" href="/institutions/">
+                        <i class="ti ti-building"></i> Institutions
+                    </a>
+                    <a class="nav-link {% if path.startswith('/users') %}active{% endif %}" href="/users/">
+                        <i class="ti ti-users"></i> Users
+                    </a>
+                    <a class="nav-link {% if path.startswith('/reports/audit') %}active{% endif %}" href="/reports/audit">
+                        <i class="ti ti-history"></i> Audit Log
+                    </a>
                     {% endif %}
 
-                    <a class="nav-link text-danger" href="/logout">Logout</a>
+                </nav>
 
+                <nav class="navbar-nav sidebar-bottom">
+                    <a class="nav-link nav-logout" href="/logout">
+                        <i class="ti ti-logout"></i> Logout
+                    </a>
                 </nav>
 
             </div>
@@ -47,7 +72,23 @@
 
         <div class="page-wrapper">
 
-            <div class="container-xl mt-4">
+            <header class="app-topbar">
+                {% if current_user %}
+                <div class="topbar-user">
+                    <div class="topbar-user-meta">
+                        <div class="topbar-user-name">{{ current_user.full_name }}</div>
+                        <div class="topbar-user-role">
+                            {% if role == "KREIS_ADMIN" %}Administrator
+                            {% elif role == "PRINCIPAL" %}Principal
+                            {% else %}Staff{% endif %}
+                        </div>
+                    </div>
+                    <div class="topbar-avatar">{{ current_user.full_name[0] }}</div>
+                </div>
+                {% endif %}
+            </header>
+
+            <div class="container-xl app-content">
 
                 {% block content %}
                 {% endblock %}

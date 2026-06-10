@@ -1,0 +1,413 @@
+/* ==========================================================================
+   KREIS IMS — global UI polish layer
+   Pure presentation. No layout-altering structural assumptions beyond the
+   Tabler markup already in the templates.
+   ========================================================================== */
+
+:root {
+    --kreis-purple: #534AB7;
+    --kreis-purple-dark: #463d9e;
+    --kreis-sidebar: #1e1e2e;
+    --kreis-ink: #1e1e2e;
+    --kreis-muted: #888;
+}
+
+/* ----- Global canvas ----------------------------------------------------- */
+body {
+    background-color: #f9fafb;
+    color: #2a2a33;
+}
+
+a {
+    color: var(--kreis-purple);
+}
+a:hover {
+    color: var(--kreis-purple-dark);
+}
+
+/* Primary buttons / accents adopt the KREIS purple ------------------------ */
+.btn-primary {
+    background-color: var(--kreis-purple);
+    border-color: var(--kreis-purple);
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--kreis-purple-dark) !important;
+    border-color: var(--kreis-purple-dark) !important;
+}
+
+/* ==========================================================================
+   SIDEBAR
+   ========================================================================== */
+.navbar-vertical {
+    background-color: var(--kreis-sidebar) !important;
+    border-right: none !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Slightly wider sidebar so nav labels breathe (matches Tabler's own
+   width + content-offset selectors so there is no gap or overlap). */
+@media (min-width: 992px) {
+    .navbar-vertical.navbar-expand-lg {
+        width: 220px;
+    }
+    .navbar-expand-lg.navbar-vertical ~ .page-wrapper {
+        margin-left: 220px;
+    }
+}
+
+.navbar-vertical > .container-fluid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: 100%;
+    min-height: 100%;
+    padding: 0.5rem 0.5rem 1rem;
+}
+
+.navbar-vertical .navbar-brand {
+    color: #ffffff !important;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 1.1rem 0.85rem 1.25rem;
+    margin: 0;
+    display: block;
+}
+
+.navbar-vertical .navbar-nav {
+    width: 100%;
+    flex-direction: column;
+}
+
+.navbar-vertical .nav-link {
+    color: rgba(255, 255, 255, 0.72) !important;
+    padding: 0.6rem 0.85rem;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+.navbar-vertical .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+}
+.navbar-vertical .nav-link.active {
+    background-color: #ffffff;
+    color: #1e1e2e !important;
+    font-weight: 600;
+}
+.navbar-vertical .nav-link i {
+    font-size: 1.1rem;
+    width: 1.2rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Logout pinned to the bottom with a separator above it */
+.sidebar-bottom {
+    margin-top: auto;
+    padding-top: 1.1rem;
+    margin-bottom: 0.35rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+/* Guarantee breathing room above the separator even on tall sidebars */
+.sidebar-main {
+    margin-bottom: 1.25rem;
+}
+.nav-logout {
+    color: #ff9b9b !important;
+}
+.nav-logout:hover {
+    background-color: rgba(255, 80, 80, 0.16) !important;
+    color: #ffbcbc !important;
+}
+
+/* ==========================================================================
+   TOP BAR
+   ========================================================================== */
+.app-topbar {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    padding: 0.7rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.topbar-user-meta {
+    text-align: right;
+    line-height: 1.25;
+    border-right: 1px solid #e6e6ec;
+    padding-right: 0.9rem;
+    margin-right: 0.15rem;
+}
+.topbar-user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--kreis-ink);
+}
+.topbar-user-role {
+    font-size: 0.72rem;
+    color: var(--kreis-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.topbar-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--kreis-purple);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+.app-content {
+    max-width: 1400px !important;
+    margin-inline: auto;
+    padding-top: 32px;
+    padding-bottom: 2.5rem;
+}
+
+/* ==========================================================================
+   CARDS / PANELS
+   ========================================================================== */
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+}
+.card-header {
+    border-bottom: 1px solid #f3f4f6;
+    background: transparent;
+}
+.card-title {
+    font-weight: 600;
+    color: var(--kreis-ink);
+}
+
+/* Low-stock panel is just a plain card — no accent border. */
+.panel-accent {
+    border-top: 1px solid #e5e7eb !important;
+}
+
+/* ==========================================================================
+   METRIC CARDS (dashboard)
+   ========================================================================== */
+.metric-card .card-body {
+    padding: 1.25rem 1.35rem;
+}
+
+/* Plain icon — muted gray, no colored container, no border accents.
+   All four cards are styled identically. */
+.metric-icon,
+.metric-icon-purple,
+.metric-icon-blue,
+.metric-icon-green,
+.metric-icon-amber,
+.metric-icon-red {
+    background: none;
+    color: #9ca3af;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.metric-label {
+    font-size: 0.78rem;
+    color: var(--kreis-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--kreis-ink);
+    line-height: 1.1;
+    margin-top: 0.25rem;
+}
+/* Low-stock card is identical to the rest; only the number turns red. */
+.metric-card.metric-urgent .metric-value {
+    color: #dc2626;
+}
+
+/* ==========================================================================
+   TABLES (applies globally — inventory, assets, users, reports, etc.)
+   ========================================================================== */
+.table thead th {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-bottom: 2px solid #e5e7eb;
+    background: transparent;
+}
+.table tbody td {
+    padding: 11px 16px;
+    vertical-align: middle;
+    border-top: none;
+    border-bottom: 1px solid #f3f4f6;
+}
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+.table a {
+    color: var(--kreis-purple);
+    font-weight: 500;
+    text-decoration: none;
+}
+.table a:hover {
+    text-decoration: underline;
+}
+
+/* Bordered tables (inventory, assets, users, institutions): drop the full
+   grid — keep only horizontal row separators for a clean, flat look. */
+.table-bordered > :not(caption) > * > * {
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-top: 0 !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+}
+.table-bordered > thead > tr > th {
+    border-bottom: 2px solid #e5e7eb !important;
+}
+
+/* ==========================================================================
+   BADGES — pill shaped, consistent status palette
+   ========================================================================== */
+.badge {
+    border-radius: 20px;
+    padding: 0.36em 0.75em;
+    font-weight: 600;
+    font-size: 0.74rem;
+    letter-spacing: 0.01em;
+}
+
+/* Green = good / return / active */
+.badge.bg-success,
+.badge.bg-green-lt {
+    background-color: #E1F5EE !important;
+    color: #0F6E56 !important;
+}
+/* Amber = low / transfer / warning */
+.badge.bg-warning,
+.badge.bg-yellow-lt {
+    background-color: #FAEEDA !important;
+    color: #854F0B !important;
+}
+/* Red = critical / issue / danger */
+.badge.bg-danger,
+.badge.bg-red-lt {
+    background-color: #FCEBEB !important;
+    color: #791F1F !important;
+}
+/* Blue = receipt / info */
+.badge.bg-blue-lt {
+    background-color: #E8EEFC !important;
+    color: #2B5BD7 !important;
+}
+/* Purple = category codes / accents */
+.badge.bg-azure-lt {
+    background-color: #ECEBFA !important;
+    color: #534AB7 !important;
+}
+
+/* ==========================================================================
+   PAGE HEADER
+   ========================================================================== */
+.page-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem !important;
+}
+.page-title {
+    font-weight: 600;
+    color: var(--kreis-ink);
+    font-size: 1.5rem;
+}
+.page-subtitle-text {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.2rem;
+}
+
+/* ==========================================================================
+   LOGIN PAGE
+   ========================================================================== */
+.login-page {
+    background: #f9fafb;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+.login-wrap {
+    width: 100%;
+    max-width: 380px;
+    padding: 1rem;
+}
+.login-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    padding: 2.25rem 2rem;
+}
+.login-brand {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+.login-logo {
+    color: var(--kreis-purple);
+    font-size: 2.4rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.login-brand h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--kreis-ink);
+    margin: 0;
+}
+.login-brand p {
+    font-size: 0.84rem;
+    color: #888;
+    margin: 0.25rem 0 0;
+}
+.login-card .form-label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #555;
+}
+.login-card .form-control {
+    padding: 0.6rem 0.85rem;
+}
+.login-footer {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.74rem;
+    margin-top: 1.1rem;
+    line-height: 1.5;
+}
