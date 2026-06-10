@@ -92,13 +92,15 @@ def _table_response(request, items, current_user, oob: bool = False):
 @router.get("/")
 async def inventory_page(
     request: Request,
-    category_id: int | None = None,
-    institution_id: int | None = None,
+    category_id: str | None = None,
+    institution_id: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    cat_id = int(category_id) if category_id else None
+    inst_id = int(institution_id) if institution_id else None
     items = await _scoped_items(
-        db, current_user, category_id=category_id, institution_id=institution_id
+        db, current_user, category_id=cat_id, institution_id=inst_id
     )
 
     if request.headers.get("HX-Request"):
@@ -126,8 +128,8 @@ async def inventory_page(
             "current_user": current_user,
             "categories": categories,
             "institutions": institutions,
-            "selected_category_id": category_id,
-            "selected_institution_id": institution_id,
+            "selected_category_id": cat_id,
+            "selected_institution_id": inst_id,
         },
     )
 
