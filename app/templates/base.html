@@ -60,7 +60,29 @@
 
     <div id="modal-container"></div>
 
+    <!-- Toast notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100">
+        <div id="app-toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold" id="app-toast-msg"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/js/tabler.min.js"></script>
+    <script>
+        document.body.addEventListener("showToast", function (evt) {
+            var toastEl = document.getElementById("app-toast");
+            var msgEl   = document.getElementById("app-toast-msg");
+            var type    = (evt.detail && evt.detail.type) || "success";
+            msgEl.textContent = (evt.detail && evt.detail.message) || "Done.";
+            toastEl.className = "toast align-items-center text-white border-0 bg-" + type;
+            var toast = bootstrap.Toast.getOrCreateInstance(toastEl, {delay: 3000});
+            toast.show();
+        });
+    </script>
 
 </body>
 

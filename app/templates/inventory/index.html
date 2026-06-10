@@ -22,13 +22,23 @@
 <div class="card">
     <div class="card-header">
         <div class="row g-2 align-items-center">
+            <div class="col">
+                <input type="text" name="asset_name" class="form-control"
+                       placeholder="Search asset name…"
+                       value="{{ selected_asset_name or '' }}"
+                       hx-get="/inventory/"
+                       hx-trigger="input changed delay:400ms"
+                       hx-target="#inventory-table"
+                       hx-swap="outerHTML"
+                       hx-include="[name=category_id],[name=institution_id]">
+            </div>
             <div class="col-auto">
                 <select name="category_id" class="form-select"
                         hx-get="/inventory/"
                         hx-trigger="change"
                         hx-target="#inventory-table"
                         hx-swap="outerHTML"
-                        hx-include="[name=institution_id]">
+                        hx-include="[name=institution_id],[name=asset_name]">
                     <option value="">All Categories</option>
                     {% for cat in categories %}
                     <option value="{{ cat.id }}"
@@ -45,7 +55,7 @@
                         hx-trigger="change"
                         hx-target="#inventory-table"
                         hx-swap="outerHTML"
-                        hx-include="[name=category_id]">
+                        hx-include="[name=category_id],[name=asset_name]">
                     <option value="">All Institutions</option>
                     {% for inst in institutions %}
                     <option value="{{ inst.id }}"

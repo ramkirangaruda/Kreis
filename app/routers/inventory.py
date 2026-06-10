@@ -1,9 +1,12 @@
+import json
+
 from fastapi import (
     APIRouter,
     Depends,
     Form,
     HTTPException,
     Request,
+    Response,
     status
 )
 
@@ -53,6 +56,7 @@ async def _scoped_items(
     current_user,
     category_id: int | None = None,
     institution_id: int | None = None,
+    asset_name: str | None = None,
 ):
     """Return inventory items the user may see, with optional filters."""
     query = select(InventoryItem).options(
@@ -67,18 +71,20 @@ async def _scoped_items(
     elif institution_id:
         query = query.where(InventoryItem.institution_id == institution_id)
 
-    if category_id:
-        query = query.join(Asset, InventoryItem.asset_id == Asset.id).where(
-            Asset.category_id == category_id
-        )
+    if category_id or asset_name:
+        query = query.join(Asset, InventoryItem.asset_id == Asset.id)
+        if category_id:
+            query = query.where(Asset.category_id == category_id)
+        if asset_name:
+            query = query.where(Asset.name.ilike(f"%{asset_name}%"))
 
     query = query.order_by(InventoryItem.id)
     result = await db.execute(query)
     return result.scalars().all()
 
 
-def _table_response(request, items, current_user, oob: bool = False):
-    return templates.TemplateResponse(
+def _table_response(request, items, current_user, oob: bool = False, toast: str | None = None):
+    resp = templates.TemplateResponse(
         "partials/inventory_table.html",
         {
             "request": request,
@@ -87,6 +93,11 @@ def _table_response(request, items, current_user, oob: bool = False):
             "oob": oob,
         },
     )
+    if toast:
+        resp.headers["HX-Trigger"] = json.dumps(
+            {"showToast": {"message": toast, "type": "success"}}
+        )
+    return resp
 
 
 @router.get("/")
@@ -94,13 +105,16 @@ async def inventory_page(
     request: Request,
     category_id: str | None = None,
     institution_id: str | None = None,
+    asset_name: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     cat_id = int(category_id) if category_id else None
     inst_id = int(institution_id) if institution_id else None
+    name_filter = asset_name.strip() if asset_name else None
     items = await _scoped_items(
-        db, current_user, category_id=cat_id, institution_id=inst_id
+        db, current_user, category_id=cat_id, institution_id=inst_id,
+        asset_name=name_filter,
     )
 
     if request.headers.get("HX-Request"):
@@ -130,6 +144,7 @@ async def inventory_page(
             "institutions": institutions,
             "selected_category_id": cat_id,
             "selected_institution_id": inst_id,
+            "selected_asset_name": name_filter,
         },
     )
 
@@ -139,20 +154,23 @@ async def inventory_page(
 @router.get("/movements")
 async def movements_page(
     request: Request,
-    institution_id: int | None = None,
-    asset_id: int | None = None,
+    institution_id: str | None = None,
+    asset_id: str | None = None,
     movement_type: str = "",
-    days: int = 30,
+    days: str = "30",
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    inst_id = int(institution_id) if institution_id else None
+    ast_id  = int(asset_id) if asset_id else None
+    days_int = int(days) if days else 30
     movements = await get_movement_history(
         db,
         current_user,
-        institution_id=institution_id,
-        asset_id=asset_id,
+        institution_id=inst_id,
+        asset_id=ast_id,
         movement_type=movement_type or None,
-        days=days,
+        days=days_int,
     )
 
     if request.headers.get("HX-Request"):
@@ -184,8 +202,8 @@ async def movements_page(
             "institutions": institutions,
             "movement_types": [t.value for t in MovementType],
             "selected_type": movement_type,
-            "selected_institution_id": institution_id,
-            "selected_days": days,
+            "selected_institution_id": inst_id,
+            "selected_days": days_int,
         },
     )
 
@@ -319,7 +337,8 @@ async def issue_asset(
     await db.commit()
 
     items = await _scoped_items(db, current_user)
-    return _table_response(request, items, current_user, oob=True)
+    return _table_response(request, items, current_user, oob=True,
+                           toast=f"Issued {quantity} item(s) to {issued_to}.")
 
 
 @router.post("/return")
@@ -366,7 +385,8 @@ async def return_asset(
         )
 
     items = await _scoped_items(db, current_user)
-    return _table_response(request, items, current_user, oob=True)
+    return _table_response(request, items, current_user, oob=True,
+                           toast=f"Returned {quantity} item(s) successfully.")
 
 
 @router.post("/transfer")
@@ -418,4 +438,5 @@ async def transfer_asset(
         )
 
     items = await _scoped_items(db, current_user)
-    return _table_response(request, items, current_user, oob=True)
+    return _table_response(request, items, current_user, oob=True,
+                           toast=f"Transferred {quantity} item(s) successfully.")
