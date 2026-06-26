@@ -53,3 +53,18 @@ class Institution(Base):
         back_populates="institution",
         lazy="selectin"
     )
+
+    # ── School ERP relationships (lazy="select": loaded explicitly via
+    # selectinload() in queries to avoid eager-loading on every Institution
+    # fetch in existing pages). ──
+    students: Mapped[list["Student"]] = relationship(
+        back_populates="institution"
+    )
+
+    class_sections: Mapped[list["ClassSection"]] = relationship(
+        back_populates="institution"
+    )
+
+    academic_years: Mapped[list["AcademicYear"]] = relationship(
+        back_populates="institution"
+    )

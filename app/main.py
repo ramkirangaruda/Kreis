@@ -13,6 +13,11 @@ from app.routers import (
     inventory,
     reports,
     users,
+    students,
+    attendance,
+    academics,
+    documents,
+    alumni,
 )
 
 app = FastAPI(
@@ -59,6 +64,37 @@ app.include_router(
     users.router,
     prefix="/users",
     tags=["users"]
+)
+
+# ── School ERP routers (Phase 1 scaffolding) ──────────────────
+app.include_router(
+    students.router,
+    prefix="/students",
+    tags=["students"]
+)
+
+app.include_router(
+    attendance.router,
+    prefix="/attendance",
+    tags=["attendance"]
+)
+
+app.include_router(
+    academics.router,
+    prefix="/academics",
+    tags=["academics"]
+)
+
+app.include_router(
+    documents.router,
+    prefix="/documents",
+    tags=["documents"]
+)
+
+app.include_router(
+    alumni.router,
+    prefix="/alumni",
+    tags=["alumni"]
 )
 
 

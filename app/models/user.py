@@ -10,6 +10,7 @@ from datetime import datetime
 class UserRole(enum.Enum):
     KREIS_ADMIN = "KREIS_ADMIN"
     PRINCIPAL = "PRINCIPAL"
+    TEACHER = "TEACHER"
     STAFF = "STAFF"
 
 
