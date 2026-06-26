@@ -1,0 +1,34 @@
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+{% for s in students %}
+<tr>
+    <td><span class="text-muted">{{ s.admission_number }}</span></td>
+    <td><a href="/students/{{ s.id }}">{{ s.full_name }}</a></td>
+    <td>
+        {% if s.gender.value == "MALE" %}<span class="badge bg-blue-lt">Male</span>
+        {% elif s.gender.value == "FEMALE" %}<span class="badge bg-azure-lt">Female</span>
+        {% else %}<span class="badge bg-secondary">Other</span>{% endif %}
+    </td>
+    <td>
+        {% if s.class_section %}{{ s.class_section.grade }} - {{ s.class_section.section }}
+        {% else %}—{% endif %}
+    </td>
+    <td>
+        {% if s.demographics and s.demographics.caste_category %}
+        <span class="badge bg-azure-lt">{{ s.demographics.caste_category.value }}</span>
+        {% else %}—{% endif %}
+    </td>
+    <td><span class="text-success">Active</span></td>
+    <td>
+        <div class="btn-list flex-nowrap">
+            <a href="/students/{{ s.id }}" class="btn btn-sm btn-outline-secondary">View</a>
+            {% if can_manage %}
+            <a href="/students/{{ s.id }}/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="7" class="text-center text-muted">No students found.</td>
+</tr>
+{% endfor %}

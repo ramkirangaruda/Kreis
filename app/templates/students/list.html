@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Students — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Students</h2></div>
+        <div class="col-auto ms-auto">
+            <div class="btn-list">
+                <a href="/students/export" class="btn btn-outline-secondary">
+                    <i class="ti ti-file-spreadsheet"></i> Export to Excel
+                </a>
+                {% if can_manage %}
+                <a href="/students/new" class="btn btn-primary">
+                    <i class="ti ti-plus"></i> Add Student
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if request.query_params.get("success") %}
+<div class="alert alert-success">{{ request.query_params.get("success") }}</div>
+{% endif %}
+
+{# ── Stats row ─────────────────────────────────────────────── #}
+<div class="row row-cards mb-3">
+    {% set cards = [
+        ("Total", stats.total, "ti-users"),
+        ("Male", stats.male, "ti-gender-male"),
+        ("Female", stats.female, "ti-gender-female"),
+        ("SC", stats.caste.SC, "ti-tag"),
+        ("ST", stats.caste.ST, "ti-tag"),
+        ("OBC", stats.caste.OBC, "ti-tag"),
+    ] %}
+    {% for label, value, icon in cards %}
+    <div class="col-6 col-sm-4 col-lg-2">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-icon"><i class="ti {{ icon }}"></i></div>
+                <div class="metric-label">{{ label }}</div>
+                <div class="metric-value">{{ value }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Filters + table ───────────────────────────────────────── #}
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2 align-items-center w-100">
+            <div class="col">
+                <input type="text" name="search" class="form-control"
+                       placeholder="Search name or admission no…"
+                       value="{{ search or '' }}"
+                       hx-get="/students/" hx-trigger="keyup changed delay:300ms"
+                       hx-target="#student-rows" hx-swap="innerHTML"
+                       hx-include="[name=class_section_id],[name=gender],[name=caste_category]">
+            </div>
+            <div class="col-auto">
+                <select name="class_section_id" class="form-select"
+                        hx-get="/students/" hx-trigger="change"
+                        hx-target="#student-rows" hx-swap="innerHTML"
+                        hx-include="[name=search],[name=gender],[name=caste_category]">
+                    <option value="">All Classes</option>
+                    {% for cs in class_sections %}
+                    <option value="{{ cs.id }}" {% if selected_class_section_id == cs.id %}selected{% endif %}>
+                        {{ cs.grade }} - {{ cs.section }}{% if is_admin and cs.institution %} ({{ cs.institution.name }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="gender" class="form-select"
+                        hx-get="/students/" hx-trigger="change"
+                        hx-target="#student-rows" hx-swap="innerHTML"
+                        hx-include="[name=search],[name=class_section_id],[name=caste_category]">
+                    <option value="">All Genders</option>
+                    {% for g in genders %}
+                    <option value="{{ g }}" {% if selected_gender == g %}selected{% endif %}>{{ g|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="caste_category" class="form-select"
+                        hx-get="/students/" hx-trigger="change"
+                        hx-target="#student-rows" hx-swap="innerHTML"
+                        hx-include="[name=search],[name=class_section_id],[name=gender]">
+                    <option value="">All Categories</option>
+                    {% for c in castes %}
+                    <option value="{{ c }}" {% if selected_caste == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr>
+                    <th>Admission No</th>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Class</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th class="w-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="student-rows">
+                {% include "partials/student_table.html" %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

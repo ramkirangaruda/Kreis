@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Students{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+{% set demo = student.demographics %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/students/" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="col"></div>
+        {% if can_manage %}
+        <div class="col-auto">
+            <div class="btn-list">
+                <a href="/students/{{ student.id }}/edit" class="btn btn-outline-secondary">
+                    <i class="ti ti-edit"></i> Edit
+                </a>
+                <form method="post" action="/students/{{ student.id }}/deactivate"
+                      onsubmit="return confirm('Deactivate {{ student.full_name }}?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-outline-danger">Deactivate</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Header card ───────────────────────────────────────────── #}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex align-items-center">
+            <span class="avatar avatar-xl me-3 rounded"
+                  style="background:#ECEBFA;color:#534AB7;font-size:1.8rem;">
+                {{ student.full_name[0] }}
+            </span>
+            <div>
+                <h2 class="mb-1">{{ student.full_name }}</h2>
+                <div class="text-muted">
+                    Admission No: <strong>{{ student.admission_number }}</strong>
+                    &nbsp;·&nbsp;
+                    Class: <strong>{% if student.class_section %}{{ student.class_section.grade }} - {{ student.class_section.section }}{% else %}—{% endif %}</strong>
+                </div>
+                <div class="mt-2">
+                    {% if student.is_residential %}
+                    <span class="badge bg-green-lt">Residential</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Day Scholar</span>
+                    {% endif %}
+                    {% if student.gender.value == "MALE" %}<span class="badge bg-blue-lt">Male</span>
+                    {% elif student.gender.value == "FEMALE" %}<span class="badge bg-azure-lt">Female</span>
+                    {% else %}<span class="badge bg-secondary">Other</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Tabs ──────────────────────────────────────────────────── #}
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item"><a href="#tab-personal" class="nav-link active" data-bs-toggle="tab">Personal Info</a></li>
+            <li class="nav-item"><a href="#tab-academic" class="nav-link" data-bs-toggle="tab">Academic</a></li>
+            <li class="nav-item"><a href="#tab-attendance" class="nav-link" data-bs-toggle="tab">Attendance</a></li>
+            <li class="nav-item"><a href="#tab-health" class="nav-link" data-bs-toggle="tab">Health</a></li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+
+        {# Tab 1 — Personal #}
+        <div class="tab-pane active show" id="tab-personal">
+            <div class="row g-3">
+                {% set rows = [
+                    ("Date of Birth", student.date_of_birth),
+                    ("Aadhar Number", student.aadhar_number or "—"),
+                    ("SATS ID", student.sats_id or "—"),
+                    ("Caste Category", (demo.caste_category.value if demo and demo.caste_category else "—")),
+                    ("Caste", (demo.caste if demo else None) or "—"),
+                    ("Religion", (demo.religion if demo else None) or "—"),
+                    ("Father", (demo.father_name if demo else None) or "—"),
+                    ("Father Occupation", (demo.father_occupation if demo else None) or "—"),
+                    ("Father Phone", (demo.father_phone if demo else None) or "—"),
+                    ("Mother", (demo.mother_name if demo else None) or "—"),
+                    ("Mother Occupation", (demo.mother_occupation if demo else None) or "—"),
+                    ("Mother Phone", (demo.mother_phone if demo else None) or "—"),
+                    ("Guardian", (demo.guardian_name if demo else None) or "—"),
+                    ("Guardian Phone", (demo.guardian_phone if demo else None) or "—"),
+                    ("Annual Income", (demo.annual_income if demo else None) or "—"),
+                    ("Village", (demo.address_village if demo else None) or "—"),
+                    ("Taluk", (demo.address_taluk if demo else None) or "—"),
+                    ("District", (demo.address_district if demo else None) or "—"),
+                    ("PIN", (demo.address_pin if demo else None) or "—"),
+                ] %}
+                {% for label, value in rows %}
+                <div class="col-md-4 col-sm-6">
+                    <div class="text-muted small text-uppercase">{{ label }}</div>
+                    <div>{{ value }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Tab 2 — Academic #}
+        <div class="tab-pane" id="tab-academic">
+            <h3 class="card-title mb-2">Exam Results</h3>
+            <div class="table-responsive mb-4">
+                <table class="table table-vcenter">
+                    <thead>
+                        <tr><th>Exam</th><th>Subject</th><th class="text-end">Marks</th><th>Grade</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in exam_results %}
+                        <tr>
+                            <td>{{ r.exam.name if r.exam else "—" }}</td>
+                            <td>{{ r.subject.name if r.subject else "—" }}</td>
+                            <td class="text-end">{{ r.marks_obtained }} / {{ r.max_marks }}</td>
+                            <td>{{ r.grade or "—" }}</td>
+                            <td>{% if r.is_absent %}<span class="badge bg-red-lt">Absent</span>{% else %}<span class="badge bg-green-lt">Appeared</span>{% endif %}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted">No exam results recorded.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="card-title mb-2">Competitive Exams</h3>
+            <div class="table-responsive">
+                <table class="table table-vcenter">
+                    <thead>
+                        <tr><th>Exam</th><th>Year</th><th>Roll No</th><th class="text-end">Rank</th><th class="text-end">Score</th><th>Qualified</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in competitive_results %}
+                        <tr>
+                            <td>{{ r.exam_name.value }}</td>
+                            <td>{{ r.exam_year }}</td>
+                            <td>{{ r.roll_number or "—" }}</td>
+                            <td class="text-end">{{ r.rank if r.rank is not none else "—" }}</td>
+                            <td class="text-end">{{ r.score if r.score is not none else "—" }}</td>
+                            <td>{% if r.qualified %}<span class="badge bg-green-lt">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">No competitive exam results.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# Tab 3 — Attendance #}
+        <div class="tab-pane" id="tab-attendance">
+            <div class="row mb-3">
+                <div class="col-auto">
+                    <div class="metric-label">This Year</div>
+                    <div class="metric-value">{{ attendance.percentage }}%</div>
+                </div>
+                <div class="col d-flex align-items-end">
+                    <div class="text-muted">
+                        Present: {{ attendance.present }} ·
+                        Late: {{ attendance.late }} ·
+                        Absent: {{ attendance.absent }} ·
+                        Excused: {{ attendance.excused }}
+                        (of {{ attendance.total }} days)
+                    </div>
+                </div>
+            </div>
+            <div class="text-muted small text-uppercase mb-2">Last 30 days</div>
+            <div class="d-flex flex-wrap" style="gap:4px;">
+                {% for day in attendance.calendar %}
+                {% if day.status == "PRESENT" %}{% set bg = "#0F6E56" %}
+                {% elif day.status == "ABSENT" %}{% set bg = "#C0392B" %}
+                {% elif day.status == "LATE" %}{% set bg = "#C77D0A" %}
+                {% elif day.status == "EXCUSED" %}{% set bg = "#6b7280" %}
+                {% else %}{% set bg = "#e9ecef" %}{% endif %}
+                <span title="{{ day.date }}{% if day.status %} — {{ day.status|capitalize }}{% endif %}"
+                      style="width:26px;height:26px;border-radius:5px;background:{{ bg }};display:inline-block;"></span>
+                {% endfor %}
+            </div>
+            <div class="text-muted small mt-2">
+                <span style="color:#0F6E56;">■</span> Present
+                <span style="color:#C77D0A;">■</span> Late
+                <span style="color:#C0392B;">■</span> Absent
+                <span style="color:#6b7280;">■</span> Excused
+                <span style="color:#e9ecef;">■</span> No record
+            </div>
+        </div>
+
+        {# Tab 4 — Health #}
+        <div class="tab-pane" id="tab-health">
+            <h3 class="card-title mb-2">Health Records</h3>
+            <div class="table-responsive mb-4">
+                <table class="table table-vcenter">
+                    <thead>
+                        <tr><th>Date</th><th>Height</th><th>Weight</th><th>Blood</th><th>Vision (L/R)</th><th>Allergies</th><th>Chronic</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for h in health_records %}
+                        <tr>
+                            <td>{{ h.recorded_date }}</td>
+                            <td>{{ h.height_cm if h.height_cm is not none else "—" }}</td>
+                            <td>{{ h.weight_kg if h.weight_kg is not none else "—" }}</td>
+                            <td>{{ h.blood_group or "—" }}</td>
+                            <td>{{ h.vision_left or "—" }} / {{ h.vision_right or "—" }}</td>
+                            <td>{{ h.allergies or "—" }}</td>
+                            <td>{{ h.chronic_conditions or "—" }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted">No health records.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="card-title mb-2">Sick Bay Visits</h3>
+            <div class="table-responsive">
+                <table class="table table-vcenter">
+                    <thead>
+                        <tr><th>Date</th><th>Complaint</th><th>Treatment</th><th>Referred</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for v in sick_bay_visits %}
+                        <tr>
+                            <td>{{ v.visit_date }}</td>
+                            <td>{{ v.complaint }}</td>
+                            <td>{{ v.treatment or "—" }}</td>
+                            <td>{% if v.referred_to_hospital %}<span class="badge bg-red-lt">{{ v.hospital_name or "Yes" }}</span>{% else %}No{% endif %}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">No sick bay visits.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
