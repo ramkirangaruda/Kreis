@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Edit Alumni{% else %}Add Alumni{% endif %} — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">{% if is_edit %}Edit Alumni{% else %}Add Alumni{% endif %}</h2></div>
+    </div>
+</div>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<form method="post" action="{{ action_url }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Personal & School</h3></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label required">Full Name</label>
+                    <input type="text" name="full_name" class="form-control" required value="{{ values.get('full_name','') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label required">Batch Year</label>
+                    <input type="number" name="batch_year" class="form-control" required value="{{ values.get('batch_year','') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label required">Passed Class</label>
+                    <input type="text" name="passed_class" class="form-control" required placeholder="e.g. 12" value="{{ values.get('passed_class','') }}">
+                </div>
+                {% if is_admin %}
+                <div class="col-md-6">
+                    <label class="form-label">Institution</label>
+                    <select name="institution_id" class="form-select">
+                        <option value="">— Select (or link a student) —</option>
+                        {% for i in institutions %}
+                        <option value="{{ i.id }}" {% if values.get('institution_id')|string == i.id|string %}selected{% endif %}>{{ i.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                    <label class="form-label">Link to Student (optional)</label>
+                    <select name="student_id" class="form-select">
+                        <option value="">— None —</option>
+                        {% for s in students %}
+                        <option value="{{ s.id }}" {% if values.get('student_id')|string == s.id|string %}selected{% endif %}>{{ s.full_name }} ({{ s.admission_number }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Post-School & Location</h3></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Current Occupation</label>
+                    <input type="text" name="current_occupation" class="form-control" value="{{ values.get('current_occupation','') }}"></div>
+                <div class="col-md-6"><label class="form-label">Employer</label>
+                    <input type="text" name="employer" class="form-control" value="{{ values.get('employer','') }}"></div>
+                <div class="col-md-6"><label class="form-label">Higher Education Institution</label>
+                    <input type="text" name="higher_education_institution" class="form-control" value="{{ values.get('higher_education_institution','') }}"></div>
+                <div class="col-md-6"><label class="form-label">Course</label>
+                    <input type="text" name="higher_education_course" class="form-control" value="{{ values.get('higher_education_course','') }}"></div>
+                <div class="col-md-6"><label class="form-label">City</label>
+                    <input type="text" name="location_city" class="form-control" value="{{ values.get('location_city','') }}"></div>
+                <div class="col-md-6"><label class="form-label">State</label>
+                    <input type="text" name="location_state" class="form-control" value="{{ values.get('location_state','') }}"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Contact & Achievement</h3></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4"><label class="form-label">Phone</label>
+                    <input type="text" name="phone" class="form-control" value="{{ values.get('phone','') }}"></div>
+                <div class="col-md-4"><label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ values.get('email','') }}"></div>
+                <div class="col-md-4"><label class="form-label">LinkedIn URL</label>
+                    <input type="text" name="linkedin_url" class="form-control" value="{{ values.get('linkedin_url','') }}"></div>
+                <div class="col-12"><label class="form-label">Notable Achievement</label>
+                    <textarea name="notable_achievement" class="form-control" rows="3">{{ values.get('notable_achievement','') }}</textarea></div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a href="/alumni/" class="btn btn-link">Cancel</a>
+            <button type="submit" class="btn btn-primary">{% if is_edit %}Save Changes{% else %}Add Alumni{% endif %}</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

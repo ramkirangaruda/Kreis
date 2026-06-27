@@ -1,0 +1,16 @@
+{% for a in alumni %}
+<tr>
+    <td><a href="/alumni/{{ a.id }}">{{ a.full_name }}</a></td>
+    <td>{{ a.batch_year }}</td>
+    <td>{{ a.passed_class }}</td>
+    <td>{{ a.current_occupation or "—" }}</td>
+    <td>{{ a.employer or "—" }}</td>
+    <td>{% if a.location_city %}{{ a.location_city }}{% if a.location_state %}, {{ a.location_state }}{% endif %}{% else %}—{% endif %}</td>
+    <td>
+        {% if a.phone or a.email %}<span class="badge bg-green-lt">Available</span>
+        {% else %}<span class="badge bg-secondary">None</span>{% endif %}
+    </td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="text-center text-muted">No alumni records found.</td></tr>
+{% endfor %}

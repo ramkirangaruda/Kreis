@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Alumni — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Alumni</h2></div>
+        <div class="col-auto ms-auto">
+            {% if can_manage %}
+            <a href="/alumni/new" class="btn btn-primary"><i class="ti ti-plus"></i> Add Alumni</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-users"></i></div>
+            <div class="metric-label">Total Alumni</div>
+            <div class="metric-value">{{ stats.total }}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-address-book"></i></div>
+            <div class="metric-label">With Contact Info</div>
+            <div class="metric-value">{{ stats.contact_pct }}%</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2 w-100">
+            <div class="col">
+                <input type="text" name="search" class="form-control" placeholder="Search name, employer, occupation…"
+                       value="{{ search or '' }}"
+                       hx-get="/alumni/" hx-trigger="keyup changed delay:300ms"
+                       hx-target="#alumni-rows" hx-swap="innerHTML"
+                       hx-include="[name=batch_year],[name=occupation]">
+            </div>
+            <div class="col-auto">
+                <input type="number" name="batch_year" class="form-control" placeholder="Batch year"
+                       value="{{ selected_batch_year or '' }}"
+                       hx-get="/alumni/" hx-trigger="keyup changed delay:300ms"
+                       hx-target="#alumni-rows" hx-swap="innerHTML"
+                       hx-include="[name=search],[name=occupation]">
+            </div>
+            <div class="col-auto">
+                <input type="text" name="occupation" class="form-control" placeholder="Occupation"
+                       value="{{ selected_occupation or '' }}"
+                       hx-get="/alumni/" hx-trigger="keyup changed delay:300ms"
+                       hx-target="#alumni-rows" hx-swap="innerHTML"
+                       hx-include="[name=search],[name=batch_year]">
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr><th>Name</th><th>Batch</th><th>Class</th><th>Occupation</th>
+                    <th>Employer</th><th>Location</th><th>Contact</th></tr>
+            </thead>
+            <tbody id="alumni-rows">
+                {% include "partials/alumni_rows.html" %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

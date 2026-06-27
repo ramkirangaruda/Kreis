@@ -8,7 +8,7 @@ the script can safely be re-run. Run with:
 
 import asyncio
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from sqlalchemy import select, func
 
@@ -19,6 +19,18 @@ from app.models.user import User, UserRole
 from app.models.institution import Institution
 from app.models.asset import Asset, AssetCategory
 from app.models.inventory import InventoryItem, AssetMovement, MovementType
+
+# ── School ERP models ──
+from app.models.student import (
+    AcademicYear, ClassSection, Student, StudentDemographics, Gender, CasteCategory,
+)
+from app.models.attendance import StudentAttendance, StudentAttendanceStatus
+from app.models.academic import (
+    Subject, Exam, ExamResult, CompetitiveExamResult, ExamType, CompetitiveExamName,
+)
+from app.models.alumni import Alumni
+from app.models.document import Circular, CircularCategory, Urgency
+from app.services.academics import grade_for
 
 
 CATEGORIES = [
@@ -264,6 +276,315 @@ async def _generate_movements(db, principal_by_inst, institution_ids):
     return count
 
 
+FIRST_NAMES = [
+    "Aarav", "Bhavya", "Chetan", "Divya", "Eshan", "Farhan", "Gagan", "Harsha",
+    "Isha", "Jyoti", "Kiran", "Lakshmi", "Manoj", "Nandini", "Pooja", "Rahul",
+    "Sahana", "Tejas", "Uma", "Varun", "Yashas", "Zara", "Anita", "Bharath",
+]
+LAST_NAMES = [
+    "Gowda", "Shetty", "Hegde", "Rao", "Patil", "Naik", "Reddy", "Kulkarni",
+    "Desai", "Murthy", "Bhat", "Acharya", "Pai", "Kamath", "Nayak",
+]
+CASTE_CYCLE = [
+    CasteCategory.SC, CasteCategory.ST, CasteCategory.OBC,
+    CasteCategory.GENERAL, CasteCategory.OBC, CasteCategory.GENERAL,
+    CasteCategory.SC, CasteCategory.OBC,
+]
+SECTIONS = [("9", "A"), ("9", "B"), ("10", "A"), ("10", "B")]
+
+
+def _recent_weekdays(n: int) -> list[date]:
+    out, d = [], date.today()
+    while len(out) < n:
+        if d.weekday() < 5:  # Mon–Fri
+            out.append(d)
+        d -= timedelta(days=1)
+    return list(reversed(out))
+
+
+async def seed_erp(db) -> dict:
+    """Seed School ERP demo data for the pilot school (Rajiv Gandhi HS)."""
+    summary = {}
+    rgh = (await db.execute(
+        select(Institution).where(Institution.code == "RGH-01")
+    )).scalar_one_or_none()
+    admin = (await db.execute(
+        select(User).where(User.email == "admin@kreis.edu")
+    )).scalar_one_or_none()
+    if not rgh or not admin:
+        return summary
+
+    # ── Academic year (single current; reuse if present) ──
+    ay = (await db.execute(
+        select(AcademicYear).where(
+            AcademicYear.institution_id == rgh.id, AcademicYear.is_current.is_(True)
+        )
+    )).scalars().first()
+    if not ay:
+        y = date.today().year if date.today().month >= 4 else date.today().year - 1
+        ay = AcademicYear(
+            institution_id=rgh.id, name=f"{y}-{(y + 1) % 100:02d}",
+            start_date=date(y, 4, 1), end_date=date(y + 1, 3, 31), is_current=True,
+        )
+        db.add(ay)
+        await db.flush()
+
+    # ── Class sections ──
+    sections = {}
+    for grade, sec in SECTIONS:
+        cs = (await db.execute(
+            select(ClassSection).where(
+                ClassSection.institution_id == rgh.id,
+                ClassSection.grade == grade, ClassSection.section == sec,
+            )
+        )).scalars().first()
+        if not cs:
+            cs = ClassSection(
+                institution_id=rgh.id, academic_year_id=ay.id, grade=grade, section=sec
+            )
+            db.add(cs)
+            await db.flush()
+        sections[(grade, sec)] = cs
+
+    # ── One teacher per class ──
+    teachers = {}
+    for grade, sec in SECTIONS:
+        email = f"teacher.{grade}{sec.lower()}@rgh.edu"
+        t = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+        if not t:
+            t = User(
+                email=email, hashed_password=hash_password("School@1234"),
+                full_name=f"Teacher {grade}{sec}", role=UserRole.TEACHER,
+                institution_id=rgh.id, password_change_required=False,
+            )
+            db.add(t)
+            await db.flush()
+        cs = sections[(grade, sec)]
+        if cs.class_teacher_id is None:
+            cs.class_teacher_id = t.id
+        teachers[(grade, sec)] = t
+
+    # ── Subjects (school-wide) ──
+    subjects = []
+    for nm, cd in [("Mathematics", "MATH"), ("Science", "SCI"), ("English", "ENG")]:
+        s = (await db.execute(
+            select(Subject).where(Subject.institution_id == rgh.id, Subject.name == nm)
+        )).scalars().first()
+        if s:
+            s.class_section_id = None  # promote to school-wide
+        else:
+            s = Subject(name=nm, code=cd, institution_id=rgh.id, class_section_id=None)
+            db.add(s)
+        subjects.append(s)
+    await db.flush()
+
+    # ── Students + demographics (20 per class) ──
+    created_students = 0
+    cidx = 0
+    for gi, (grade, sec) in enumerate(SECTIONS):
+        cs = sections[(grade, sec)]
+        for n in range(1, 21):
+            adm = f"RGH-{grade}{sec}-{n:02d}"
+            exists = (await db.execute(
+                select(Student.id).where(
+                    Student.institution_id == rgh.id, Student.admission_number == adm
+                )
+            )).scalar_one_or_none()
+            if exists:
+                continue
+            gender = Gender.MALE if n % 2 else Gender.FEMALE
+            student = Student(
+                admission_number=adm, institution_id=rgh.id, class_section_id=cs.id,
+                academic_year_id=ay.id,
+                full_name=f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}",
+                date_of_birth=date(2010 if grade == "10" else 2011, ((n % 12) + 1), ((n % 27) + 1)),
+                gender=gender, is_active=True, is_residential=(n % 3 != 0),
+            )
+            db.add(student)
+            await db.flush()
+            cc = CASTE_CYCLE[cidx % len(CASTE_CYCLE)]
+            cidx += 1
+            db.add(StudentDemographics(
+                student_id=student.id, caste_category=cc, religion="Hindu",
+                father_name=f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}",
+                father_phone=f"98{random.randint(10000000, 99999999)}",
+                mother_name=f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}",
+                annual_income=random.choice([60000, 90000, 120000, 180000]),
+                address_district="Tumkur", address_pin="572101",
+            ))
+            created_students += 1
+    await db.flush()
+    summary["students_created"] = created_students
+
+    # ── Attendance: 10 recent weekdays per class ──
+    weekdays = _recent_weekdays(10)
+    att_created = 0
+    for (grade, sec), cs in sections.items():
+        students_in = (await db.execute(
+            select(Student).where(Student.class_section_id == cs.id, Student.is_active.is_(True))
+        )).scalars().all()
+        existing = set((await db.execute(
+            select(StudentAttendance.student_id, StudentAttendance.date).where(
+                StudentAttendance.class_section_id == cs.id,
+                StudentAttendance.date >= weekdays[0],
+            )
+        )).all())
+        marker = teachers[(grade, sec)].id
+        for st in students_in:
+            for d in weekdays:
+                if (st.id, d) in existing:
+                    continue
+                r = random.random()
+                status = (
+                    StudentAttendanceStatus.ABSENT if r < 0.15
+                    else StudentAttendanceStatus.LATE if r < 0.20
+                    else StudentAttendanceStatus.PRESENT
+                )
+                db.add(StudentAttendance(
+                    student_id=st.id, class_section_id=cs.id, date=d,
+                    status=status, marked_by_id=marker,
+                ))
+                att_created += 1
+    await db.flush()
+    summary["attendance_created"] = att_created
+
+    # ── Exams ──
+    unit = (await db.execute(
+        select(Exam).where(
+            Exam.institution_id == rgh.id, Exam.academic_year_id == ay.id,
+            Exam.name == "Unit Test 1",
+        )
+    )).scalars().first()
+    if not unit:
+        unit = Exam(
+            institution_id=rgh.id, academic_year_id=ay.id, name="Unit Test 1",
+            exam_type=ExamType.UNIT_TEST,
+            start_date=date.today() - timedelta(days=20),
+            end_date=date.today() - timedelta(days=16),
+        )
+        db.add(unit)
+        await db.flush()
+    midterm = (await db.execute(
+        select(Exam).where(
+            Exam.institution_id == rgh.id, Exam.academic_year_id == ay.id,
+            Exam.name == "Mid-Term",
+        )
+    )).scalars().first()
+    if not midterm:
+        midterm = Exam(
+            institution_id=rgh.id, academic_year_id=ay.id, name="Mid-Term",
+            exam_type=ExamType.MID_TERM,
+            start_date=date.today() + timedelta(days=15),
+            end_date=date.today() + timedelta(days=20),
+        )
+        db.add(midterm)
+        await db.flush()
+
+    # ── Marks for Unit Test 1 (all students × 3 subjects) ──
+    existing_marks = set((await db.execute(
+        select(ExamResult.student_id, ExamResult.subject_id).where(
+            ExamResult.exam_id == unit.id
+        )
+    )).all())
+    all_students = (await db.execute(
+        select(Student).where(Student.institution_id == rgh.id, Student.is_active.is_(True))
+    )).scalars().all()
+    marks_created = 0
+    for st in all_students:
+        for subj in subjects:
+            if (st.id, subj.id) in existing_marks:
+                continue
+            obtained = float(random.randint(25, 98))
+            pct = obtained / 100 * 100
+            db.add(ExamResult(
+                student_id=st.id, exam_id=unit.id, subject_id=subj.id,
+                marks_obtained=obtained, max_marks=100.0, is_absent=False,
+                grade=grade_for(pct),
+            ))
+            marks_created += 1
+    await db.flush()
+    summary["marks_created"] = marks_created
+
+    # ── Alumni ──
+    alumni_data = [
+        (2020, "Prakash Gowda", "10", "Software Engineer", "Infosys", "Bengaluru", "Karnataka"),
+        (2021, "Sneha Rao", "10", "Medical Student", "Bangalore Medical College", "Bengaluru", "Karnataka"),
+        (2022, "Arjun Patil", "10", "Undergraduate", "IIT Madras", "Chennai", "Tamil Nadu"),
+    ]
+    alumni_created = 0
+    for yr, name, pclass, occ, emp, city, state in alumni_data:
+        ex = (await db.execute(
+            select(Alumni.id).where(
+                Alumni.institution_id == rgh.id, Alumni.full_name == name,
+                Alumni.batch_year == yr,
+            )
+        )).scalar_one_or_none()
+        if ex:
+            continue
+        db.add(Alumni(
+            institution_id=rgh.id, full_name=name, batch_year=yr, passed_class=pclass,
+            current_occupation=occ, employer=emp, location_city=city, location_state=state,
+            phone=f"99{random.randint(10000000, 99999999)}",
+            email=f"{name.split()[0].lower()}@example.com",
+            updated_by_id=admin.id,
+        ))
+        alumni_created += 1
+    await db.flush()
+    summary["alumni_created"] = alumni_created
+
+    # ── Circulars ──
+    circ_created = 0
+    for title, content, cat, urg, inst in [
+        ("Annual Examination Schedule 2026",
+         "Mid-term examinations begin in two weeks. Prepare accordingly.",
+         CircularCategory.EXAM, Urgency.URGENT, None),
+        ("Uniform Distribution Drive",
+         "New uniforms will be distributed next month at all residential schools.",
+         CircularCategory.ADMINISTRATIVE, Urgency.NORMAL, rgh.id),
+    ]:
+        ex = (await db.execute(
+            select(Circular.id).where(Circular.title == title)
+        )).scalar_one_or_none()
+        if ex:
+            continue
+        db.add(Circular(
+            institution_id=inst, title=title, content=content, category=cat,
+            urgency=urg, uploaded_by_id=admin.id,
+        ))
+        circ_created += 1
+    await db.flush()
+    summary["circulars_created"] = circ_created
+
+    # ── Competitive results ──
+    comp_created = 0
+    comp_specs = [
+        (CompetitiveExamName.CET, 2025, 1240, 142.5, True),
+        (CompetitiveExamName.JEE_MAINS, 2025, 8800, 96.2, True),
+        (CompetitiveExamName.NEET, 2025, 21000, 540.0, True),
+    ]
+    targets = all_students[:3]
+    for st, (ename, yr, rank, score, qual) in zip(targets, comp_specs):
+        ex = (await db.execute(
+            select(CompetitiveExamResult.id).where(
+                CompetitiveExamResult.student_id == st.id,
+                CompetitiveExamResult.exam_name == ename,
+                CompetitiveExamResult.exam_year == yr,
+            )
+        )).scalar_one_or_none()
+        if ex:
+            continue
+        db.add(CompetitiveExamResult(
+            student_id=st.id, exam_name=ename, exam_year=yr,
+            rank=rank, score=score, qualified=qual,
+        ))
+        comp_created += 1
+    await db.flush()
+    summary["competitive_created"] = comp_created
+
+    await db.commit()
+    return summary
+
+
 async def seed():
     async with AsyncSessionLocal() as db:
         await _get_or_create_categories(db)
@@ -302,11 +623,21 @@ async def seed():
 
         await db.commit()
 
+        erp = await seed_erp(db)
+
         print("Demo seed complete.")
         print(f"  Institutions: {len(institutions)}")
         print(f"  Assets: {len(assets)}")
         print(f"  Principals: {len(principals)} (password: School@1234)")
         print(f"  Movements generated this run: {movement_count}")
+        print("  ── School ERP (Rajiv Gandhi HS) ──")
+        print(f"  Students created: {erp.get('students_created', 0)}")
+        print(f"  Attendance rows: {erp.get('attendance_created', 0)}")
+        print(f"  Marks rows: {erp.get('marks_created', 0)}")
+        print(f"  Alumni: {erp.get('alumni_created', 0)}")
+        print(f"  Circulars: {erp.get('circulars_created', 0)}")
+        print(f"  Competitive results: {erp.get('competitive_created', 0)}")
+        print("  Teacher logins: teacher.9a@rgh.edu … (password: School@1234)")
         print("  Admin login: admin@kreis.edu / changeme123")
 
 

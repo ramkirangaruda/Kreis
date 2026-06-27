@@ -8,9 +8,9 @@ queries genuinely run in parallel.
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case, or_
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
@@ -18,6 +18,11 @@ from app.models.asset import Asset, AssetCategory
 from app.models.institution import Institution
 from app.models.inventory import InventoryItem, AssetMovement, MovementType
 from app.models.user import User
+from app.models.student import Student, ClassSection, AcademicYear
+from app.models.attendance import StudentAttendance, StudentAttendanceStatus
+from app.models.academic import Exam, ExamResult
+from app.models.document import Circular, CircularAcknowledgement
+from app.models.audit_log import AuditLog
 
 
 async def _count_active_institutions(is_admin: bool) -> int:
@@ -163,6 +168,132 @@ async def _recent_movements(is_admin: bool, institution_id: int | None):
         ]
 
 
+# ── School ERP dashboard figures ───────────────────────────────
+
+async def _count_students(is_admin, institution_id) -> int:
+    async with AsyncSessionLocal() as db:
+        q = select(func.count(Student.id)).where(Student.is_active.is_(True))
+        if not is_admin:
+            q = q.where(Student.institution_id == institution_id)
+        return (await db.execute(q)).scalar() or 0
+
+
+async def _today_attendance_rate(is_admin, institution_id) -> float:
+    async with AsyncSessionLocal() as db:
+        today = date.today()
+        present_c = func.sum(case(
+            (StudentAttendance.status.in_(
+                [StudentAttendanceStatus.PRESENT, StudentAttendanceStatus.LATE]), 1),
+            else_=0,
+        ))
+        total_c = func.count(StudentAttendance.id)
+        q = (
+            select(present_c, total_c)
+            .join(Student, Student.id == StudentAttendance.student_id)
+            .where(StudentAttendance.date == today)
+        )
+        if not is_admin:
+            q = q.where(Student.institution_id == institution_id)
+        present, total = (await db.execute(q)).one()
+        present, total = int(present or 0), int(total or 0)
+        return round(present / total * 100, 1) if total else 0.0
+
+
+async def _low_attendance_count(is_admin, institution_id) -> int:
+    async with AsyncSessionLocal() as db:
+        present_c = func.sum(case((StudentAttendance.status == StudentAttendanceStatus.PRESENT, 1), else_=0))
+        late_c = func.sum(case((StudentAttendance.status == StudentAttendanceStatus.LATE, 1), else_=0))
+        total_c = func.count(StudentAttendance.id)
+        q = (
+            select(total_c, present_c, late_c)
+            .select_from(Student)
+            .join(StudentAttendance, StudentAttendance.student_id == Student.id)
+            .where(Student.is_active.is_(True))
+            .group_by(Student.id)
+            .having(total_c > 0)
+        )
+        if not is_admin:
+            q = q.where(Student.institution_id == institution_id)
+        rows = (await db.execute(q)).all()
+        return sum(
+            1 for total, present, late in rows
+            if (int(present or 0) + int(late or 0)) / int(total) * 100 < 75
+        )
+
+
+async def _low_performers_count(is_admin, institution_id) -> int:
+    async with AsyncSessionLocal() as db:
+        exam_q = select(Exam).order_by(Exam.start_date.desc())
+        if not is_admin:
+            exam_q = exam_q.where(Exam.institution_id == institution_id)
+        latest = (await db.execute(exam_q.limit(1))).scalar_one_or_none()
+        if not latest:
+            return 0
+        rows = (await db.execute(
+            select(ExamResult.student_id, ExamResult.marks_obtained, ExamResult.max_marks)
+            .where(ExamResult.exam_id == latest.id, ExamResult.is_absent.is_(False))
+        )).all()
+        flagged = {
+            sid for sid, obtained, mx in rows
+            if mx and (obtained / mx * 100) < 35
+        }
+        return len(flagged)
+
+
+async def _pending_circulars_count(is_admin, institution_id) -> int:
+    if is_admin or institution_id is None:
+        return 0
+    async with AsyncSessionLocal() as db:
+        visible = set((await db.execute(
+            select(Circular.id).where(or_(
+                Circular.institution_id == institution_id,
+                Circular.institution_id.is_(None),
+            ))
+        )).scalars().all())
+        acked = set((await db.execute(
+            select(CircularAcknowledgement.circular_id).where(
+                CircularAcknowledgement.institution_id == institution_id
+            )
+        )).scalars().all())
+        return len(visible - acked)
+
+
+async def _upcoming_exams(is_admin, institution_id):
+    async with AsyncSessionLocal() as db:
+        today = date.today()
+        q = select(Exam).where(Exam.start_date >= today).order_by(Exam.start_date).limit(3)
+        if not is_admin:
+            q = q.where(Exam.institution_id == institution_id)
+        exams = (await db.execute(q)).scalars().all()
+        return [
+            {"name": e.name, "exam_type": e.exam_type.value, "start_date": e.start_date}
+            for e in exams
+        ]
+
+
+async def _recent_activity(is_admin, institution_id):
+    """Unified recent-activity feed sourced from the audit log."""
+    async with AsyncSessionLocal() as db:
+        q = (
+            select(AuditLog, User.full_name)
+            .join(User, User.id == AuditLog.user_id)
+            .order_by(AuditLog.created_at.desc())
+            .limit(12)
+        )
+        if not is_admin:
+            q = q.where(User.institution_id == institution_id)
+        rows = (await db.execute(q)).all()
+        return [
+            {
+                "action": log.action,
+                "entity": log.entity,
+                "performed_by": name,
+                "created_at": log.created_at,
+            }
+            for log, name in rows
+        ]
+
+
 async def get_dashboard_stats(db, current_user) -> dict:
     """Aggregate dashboard figures, scoped to the current user's role.
 
@@ -179,6 +310,13 @@ async def get_dashboard_stats(db, current_user) -> dict:
         pending_transfers,
         category_breakdown,
         recent_movements,
+        total_students,
+        today_attendance_rate,
+        low_attendance_count,
+        low_performers_count,
+        pending_circulars_count,
+        upcoming_exams,
+        recent_activity,
     ) = await asyncio.gather(
         _count_active_institutions(is_admin),
         _total_quantity(is_admin, institution_id),
@@ -186,6 +324,13 @@ async def get_dashboard_stats(db, current_user) -> dict:
         _pending_transfers(is_admin, institution_id),
         _category_breakdown(is_admin, institution_id),
         _recent_movements(is_admin, institution_id),
+        _count_students(is_admin, institution_id),
+        _today_attendance_rate(is_admin, institution_id),
+        _low_attendance_count(is_admin, institution_id),
+        _low_performers_count(is_admin, institution_id),
+        _pending_circulars_count(is_admin, institution_id),
+        _upcoming_exams(is_admin, institution_id),
+        _recent_activity(is_admin, institution_id),
     )
 
     grand_total = sum(row["total"] for row in category_breakdown)
@@ -202,4 +347,12 @@ async def get_dashboard_stats(db, current_user) -> dict:
         "pending_transfers": pending_transfers,
         "category_breakdown": category_breakdown,
         "recent_movements": recent_movements,
+        # ── School ERP ──
+        "total_students": total_students,
+        "today_attendance_rate": today_attendance_rate,
+        "low_attendance_count": low_attendance_count,
+        "low_performers_count": low_performers_count,
+        "pending_circulars_count": pending_circulars_count,
+        "upcoming_exams": upcoming_exams,
+        "recent_activity": recent_activity,
     }

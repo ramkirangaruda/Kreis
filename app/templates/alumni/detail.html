@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ alum.full_name }} — Alumni{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/alumni/" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left"></i> Back</a>
+        </div>
+        <div class="col"><h2 class="page-title">{{ alum.full_name }}</h2></div>
+        <div class="col-auto ms-auto">
+            {% if can_manage %}
+            <a href="/alumni/{{ alum.id }}/edit" class="btn btn-outline-secondary"><i class="ti ti-edit"></i> Edit</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">School History</h3></div>
+            <div class="card-body">
+                <div class="mb-2"><span class="text-muted">Institution:</span> {{ alum.institution.name if alum.institution else "—" }}</div>
+                <div class="mb-2"><span class="text-muted">Batch Year:</span> {{ alum.batch_year }}</div>
+                <div class="mb-2"><span class="text-muted">Passed Class:</span> {{ alum.passed_class }}</div>
+                {% if alum.student %}<div><span class="text-muted">Linked Student:</span> {{ alum.student.full_name }} ({{ alum.student.admission_number }})</div>{% endif %}
+            </div>
+        </div>
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">Current Status</h3></div>
+            <div class="card-body">
+                <div class="mb-2"><span class="text-muted">Occupation:</span> {{ alum.current_occupation or "—" }}</div>
+                <div class="mb-2"><span class="text-muted">Employer:</span> {{ alum.employer or "—" }}</div>
+                <div class="mb-2"><span class="text-muted">Higher Education:</span> {{ alum.higher_education_institution or "—" }}</div>
+                <div><span class="text-muted">Course:</span> {{ alum.higher_education_course or "—" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">Contact</h3></div>
+            <div class="card-body">
+                <div class="mb-2"><i class="ti ti-phone me-1"></i> {{ alum.phone or "—" }}</div>
+                <div class="mb-2"><i class="ti ti-mail me-1"></i> {{ alum.email or "—" }}</div>
+                <div class="mb-2"><i class="ti ti-map-pin me-1"></i>
+                    {% if alum.location_city %}{{ alum.location_city }}{% if alum.location_state %}, {{ alum.location_state }}{% endif %}{% else %}—{% endif %}</div>
+                {% if alum.linkedin_url %}<div><a href="{{ alum.linkedin_url }}" target="_blank"><i class="ti ti-brand-linkedin me-1"></i> LinkedIn</a></div>{% endif %}
+            </div>
+        </div>
+        {% if alum.notable_achievement %}
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Notable Achievement</h3></div>
+            <div class="card-body" style="white-space:pre-wrap;">{{ alum.notable_achievement }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -29,6 +29,10 @@
                     KREIS IMS
                 </h1>
 
+                {% set ADMIN = ["KREIS_ADMIN"] %}
+                {% set MANAGER = ["KREIS_ADMIN", "PRINCIPAL"] %}
+                {% set TEACH = ["KREIS_ADMIN", "PRINCIPAL", "TEACHER"] %}
+                {% set INV = ["KREIS_ADMIN", "PRINCIPAL", "STAFF"] %}
                 <nav class="navbar-nav sidebar-main">
 
                     <a class="nav-link {% if path.startswith('/dashboard') %}active{% endif %}" href="/dashboard">
@@ -39,37 +43,53 @@
                         <i class="ti ti-school"></i> Students
                     </a>
 
+                    {% if role in TEACH %}
                     <a class="nav-link {% if path.startswith('/attendance') %}active{% endif %}" href="/attendance/">
                         <i class="ti ti-checkbox"></i> Attendance
                     </a>
-
                     <a class="nav-link {% if path.startswith('/academics') %}active{% endif %}" href="/academics/">
                         <i class="ti ti-book"></i> Academics
                     </a>
-
-                    <a class="nav-link {% if path.startswith('/inventory') %}active{% endif %}" href="/inventory/">
-                        <i class="ti ti-box"></i> Inventory
-                    </a>
-
-                    <a class="nav-link {% if path.startswith('/assets') %}active{% endif %}" href="/assets/">
-                        <i class="ti ti-package"></i> Assets
-                    </a>
+                    {% endif %}
 
                     <a class="nav-link {% if path.startswith('/documents') %}active{% endif %}" href="/documents/">
                         <i class="ti ti-files"></i> Documents
                     </a>
 
-                    <a class="nav-link {% if path.startswith('/reports/stock') %}active{% endif %}" href="/reports/stock">
-                        <i class="ti ti-chart-bar"></i> Reports
+                    {% if role in MANAGER %}
+                    <a class="nav-link {% if path.startswith('/alumni') %}active{% endif %}" href="/alumni/">
+                        <i class="ti ti-users-group"></i> Alumni
                     </a>
+                    {% endif %}
 
-                    {% if role == "KREIS_ADMIN" %}
+                    {% if role in ADMIN %}
                     <a class="nav-link {% if path.startswith('/institutions') %}active{% endif %}" href="/institutions/">
                         <i class="ti ti-building"></i> Institutions
                     </a>
                     <a class="nav-link {% if path.startswith('/users') %}active{% endif %}" href="/users/">
                         <i class="ti ti-users"></i> Users
                     </a>
+                    {% endif %}
+
+                    {% if role in MANAGER %}
+                    <a class="nav-link {% if path.startswith('/assets') %}active{% endif %}" href="/assets/">
+                        <i class="ti ti-package"></i> Assets
+                    </a>
+                    {% endif %}
+
+                    {% if role in INV %}
+                    <a class="nav-link {% if path.startswith('/inventory') %}active{% endif %}" href="/inventory/">
+                        <i class="ti ti-box"></i> Inventory
+                    </a>
+                    {% endif %}
+
+                    {% if role in MANAGER %}
+                    <a class="nav-link {% if path.startswith('/reports/stock') %}active{% endif %}" href="/reports/stock">
+                        <i class="ti ti-chart-bar"></i> Reports
+                    </a>
+                    {% endif %}
+
+                    {% if role in ADMIN %}
                     <a class="nav-link {% if path.startswith('/reports/audit') %}active{% endif %}" href="/reports/audit">
                         <i class="ti ti-history"></i> Audit Log
                     </a>

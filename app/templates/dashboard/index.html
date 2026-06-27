@@ -5,6 +5,9 @@
 {% block content %}
 
 {% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+{% set role = current_user.role.value %}
+{% set can_manage = role in ["KREIS_ADMIN", "PRINCIPAL"] %}
+{% set can_teach = role in ["KREIS_ADMIN", "PRINCIPAL", "TEACHER"] %}
 
 <div class="page-header d-print-none">
     <div class="row align-items-center">
@@ -54,6 +57,72 @@
         </div>
     </div>
 </div>
+
+{# ── School ERP metric cards ───────────────────────────────── #}
+<div class="row row-cards mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-school"></i></div>
+            <div class="metric-label">Total Students</div>
+            <div class="metric-value">{{ stats.total_students }}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-checkbox"></i></div>
+            <div class="metric-label">Today's Attendance</div>
+            <div class="metric-value">{{ stats.today_attendance_rate }}%</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card metric-card {% if stats.low_attendance_count > 0 %}metric-urgent{% endif %}"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-user-exclamation"></i></div>
+            <div class="metric-label">Low Attendance</div>
+            <div class="metric-value">{{ stats.low_attendance_count }}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card metric-card {% if stats.pending_circulars_count > 0 %}metric-urgent{% endif %}"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-mail"></i></div>
+            <div class="metric-label">Pending Circulars</div>
+            <div class="metric-value">{{ stats.pending_circulars_count }}</div>
+        </div></div>
+    </div>
+</div>
+
+{# ── Quick Actions ─────────────────────────────────────────── #}
+<div class="card mb-4">
+    <div class="card-header"><h3 class="card-title">Quick Actions</h3></div>
+    <div class="card-body">
+        <div class="btn-list">
+            {% if can_teach %}
+            <a href="/attendance/" class="btn btn-outline-primary"><i class="ti ti-checkbox"></i> Mark Today's Attendance</a>
+            {% endif %}
+            <a href="/documents/circulars" class="btn btn-outline-primary"><i class="ti ti-mail"></i> View Pending Circulars</a>
+            {% if can_teach %}
+            <a href="/academics/" class="btn btn-outline-primary"><i class="ti ti-clipboard-list"></i> Enter Exam Results</a>
+            {% endif %}
+            {% if can_manage %}
+            <a href="/students/new" class="btn btn-outline-primary"><i class="ti ti-user-plus"></i> Add Student</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── Upcoming exams ────────────────────────────────────────── #}
+{% if stats.upcoming_exams %}
+<div class="card mb-4">
+    <div class="card-header"><h3 class="card-title">Upcoming Exams</h3></div>
+    <div class="list-group list-group-flush">
+        {% for e in stats.upcoming_exams %}
+        <div class="list-group-item d-flex justify-content-between">
+            <span>{{ e.name }} <span class="badge bg-azure-lt ms-1">{{ e.exam_type|replace("_"," ")|title }}</span></span>
+            <span class="text-muted">{{ e.start_date }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 {# ── Low stock alert list ─────────────────────────────────── #}
 {% if stats.low_stock_items %}
@@ -153,7 +222,7 @@
     </div>
 </div>
 
-{# ── Recent activity feed ─────────────────────────────────── #}
+{# ── Recent activity feed (unified across all modules) ─────── #}
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Recent Activity</h3>
@@ -162,34 +231,29 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Type</th>
-                    <th>Asset</th>
-                    {% if is_admin %}<th>Institution</th>{% endif %}
-                    <th class="text-end">Qty</th>
+                    <th>Action</th>
+                    <th>Entity</th>
                     <th>By</th>
                     <th>When</th>
                 </tr>
             </thead>
             <tbody>
-                {% for m in stats.recent_movements %}
+                {% for a in stats.recent_activity %}
                 <tr>
                     <td>
-                        {% set mt = m.movement_type %}
-                        {% if mt == "ISSUE" %}<span class="badge bg-red-lt">Issue</span>
-                        {% elif mt == "RETURN" %}<span class="badge bg-green-lt">Return</span>
-                        {% elif mt == "TRANSFER" %}<span class="badge bg-yellow-lt">Transfer</span>
-                        {% elif mt == "RECEIPT" %}<span class="badge bg-blue-lt">Receipt</span>
-                        {% else %}<span class="badge bg-secondary">{{ mt }}</span>
-                        {% endif %}
+                        {% set act = a.action %}
+                        {% if "CREATE" in act or "ENTER" in act or "UPLOAD" in act %}{% set bc = "bg-green-lt" %}
+                        {% elif "MARK" in act %}{% set bc = "bg-blue-lt" %}
+                        {% elif "DEACTIVATE" in act %}{% set bc = "bg-red-lt" %}
+                        {% else %}{% set bc = "bg-azure-lt" %}{% endif %}
+                        <span class="badge {{ bc }}">{{ act|replace("_"," ")|title }}</span>
                     </td>
-                    <td>{{ m.asset }}</td>
-                    {% if is_admin %}<td>{{ m.institution }}</td>{% endif %}
-                    <td class="text-end">{{ m.quantity }}</td>
-                    <td>{{ m.performed_by }}</td>
-                    <td class="text-muted">{{ m.created_at | timeago }}</td>
+                    <td>{{ a.entity }}</td>
+                    <td>{{ a.performed_by }}</td>
+                    <td class="text-muted">{{ a.created_at | timeago }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="{% if is_admin %}6{% else %}5{% endif %}" class="text-center text-muted">No recent activity.</td></tr>
+                <tr><td colspan="4" class="text-center text-muted">No recent activity.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
