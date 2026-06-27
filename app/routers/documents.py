@@ -259,11 +259,13 @@ async def upload_page(
                 Student.is_active.is_(True),
             ).order_by(Student.full_name)
         )).scalars().all()
+    recent = (await list_documents(db, current_user))[:8]
     return templates.TemplateResponse(
         "documents/upload.html",
         {
             "request": request, "current_user": current_user,
             "doc_types": [d.value for d in DocType], "students": students,
+            "recent": recent,
         },
     )
 

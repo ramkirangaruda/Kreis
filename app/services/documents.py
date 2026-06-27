@@ -245,6 +245,30 @@ async def upload_document(db, file, doc_type, title, tags, student_id=None,
         details={"title": doc.title, "type": dt.value}, ip_address=ip,
     )
     await db.commit()
+
+    # ── Trigger OCR based on file type ──
+    # The stored URL is "/uploads/<sub>/<name>"; the filesystem path (shared
+    # with the celery worker via the uploads volume) is the same minus the
+    # leading slash.
+    ext = (doc.file_name.rsplit(".", 1)[-1] if "." in doc.file_name else "").lower()
+    fs_path = doc.file_url.lstrip("/")
+    image_exts = {"jpg", "jpeg", "png", "tif", "tiff"}
+
+    if ext in image_exts:
+        # Queue background OCR. Status stays PENDING until the worker picks it up.
+        try:
+            from app.tasks import process_ocr
+            process_ocr.delay(doc.id, fs_path)
+        except Exception:
+            # Broker unavailable — leave PENDING so it can be retried later.
+            pass
+    elif ext == "pdf":
+        doc.ocr_status = OcrStatus.PENDING  # PDF OCR support comes later
+        await db.commit()
+    else:
+        doc.ocr_status = OcrStatus.FAILED  # non-image, OCR not applicable
+        await db.commit()
+
     return doc
 
 

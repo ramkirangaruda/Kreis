@@ -52,4 +52,35 @@
         </div>
     </div>
 </form>
+
+{# ── Recent uploads with OCR status ───────────────────────── #}
+<div class="card mt-3">
+    <div class="card-header"><h3 class="card-title">Recent Uploads</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Title</th><th>Type</th><th>OCR Status</th><th>Uploaded</th><th class="w-1"></th></tr>
+            </thead>
+            <tbody>
+                {% for d in recent %}
+                <tr>
+                    <td>{{ d.title }}</td>
+                    <td><span class="badge bg-azure-lt">{{ d.doc_type.value|replace("_"," ")|title }}</span></td>
+                    <td>
+                        {% set st = d.ocr_status.value %}
+                        {% if st == "PENDING" %}<span class="badge bg-secondary">Queued</span>
+                        {% elif st == "PROCESSING" %}<span class="badge bg-warning text-dark">Processing</span>
+                        {% elif st == "DONE" %}<span class="badge bg-success">Searchable</span>
+                        {% else %}<span class="badge bg-danger">OCR Failed</span>{% endif %}
+                    </td>
+                    <td class="text-muted">{{ d.created_at.strftime("%d %b %Y %H:%M") }}</td>
+                    <td><a href="{{ d.file_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted">No uploads yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -1,7 +1,7 @@
 <div class="table-responsive">
     <table class="table table-vcenter card-table">
         <thead>
-            <tr><th>Title</th><th>Type</th><th>Tags</th><th>Student</th><th>Uploaded</th><th class="w-1"></th></tr>
+            <tr><th>Title</th><th>Type</th><th>Tags</th><th>Student</th><th>OCR</th><th>Uploaded</th><th class="w-1"></th></tr>
         </thead>
         <tbody>
             {% for d in documents %}
@@ -14,11 +14,18 @@
                     {% else %}<span class="text-muted">—</span>{% endif %}
                 </td>
                 <td>{{ d.student.full_name if d.student else "—" }}</td>
+                <td>
+                    {% set st = d.ocr_status.value %}
+                    {% if st == "PENDING" %}<span class="badge bg-secondary">Queued</span>
+                    {% elif st == "PROCESSING" %}<span class="badge bg-warning text-dark">Processing</span>
+                    {% elif st == "DONE" %}<span class="badge bg-success">Searchable</span>
+                    {% else %}<span class="badge bg-danger">OCR Failed</span>{% endif %}
+                </td>
                 <td class="text-muted">{{ d.created_at.strftime("%d %b %Y") }}</td>
                 <td><a href="{{ d.file_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Download</a></td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center text-muted">No documents found.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">No documents found.</td></tr>
             {% endfor %}
         </tbody>
     </table>

@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     app_name: str = "KREIS IMS"
     debug: bool = False
 
+    # Bhashini OCR/ASR (optional — system works without it configured)
+    bhashini_api_key: str = ""
+    bhashini_user_id: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False

@@ -28,6 +28,34 @@ services:
 
     volumes:
       - .:/app
+      - ./uploads:/app/uploads
+
+  celery_worker:
+    build: .
+
+    container_name: kreis-celery
+
+    command: celery -A app.tasks worker --loglevel=info --concurrency=2 -Q default
+
+    env_file:
+      - .env
+
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kreis:password@postgres:5432/kreis_ims
+      REDIS_URL: redis://redis:6379
+      PYTHONPATH: /app
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+
+    restart: unless-stopped
 
   postgres:
     image: postgres:15
