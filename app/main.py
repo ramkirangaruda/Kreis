@@ -33,6 +33,13 @@ try:
 except RuntimeError:
     pass
 
+# User-uploaded files (circulars, documents, bills). Importing the storage
+# module ensures the uploads/ directory exists. Use a `from` import so the
+# name `app` (the FastAPI instance) is not shadowed by the `app` package.
+from app.core import storage as _storage  # noqa: E402,F401
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 app.include_router(auth.router, tags=["auth"])
 app.include_router(dashboard.router, tags=["dashboard"])
 

@@ -1,0 +1,25 @@
+<div class="table-responsive">
+    <table class="table table-vcenter card-table">
+        <thead>
+            <tr><th>Title</th><th>Type</th><th>Tags</th><th>Student</th><th>Uploaded</th><th class="w-1"></th></tr>
+        </thead>
+        <tbody>
+            {% for d in documents %}
+            <tr>
+                <td>{{ d.title }}</td>
+                <td><span class="badge bg-azure-lt">{{ d.doc_type.value|replace("_"," ")|title }}</span></td>
+                <td>
+                    {% if d.tags %}
+                        {% for t in d.tags.split(",") %}<span class="badge bg-blue-lt me-1">{{ t.strip() }}</span>{% endfor %}
+                    {% else %}<span class="text-muted">—</span>{% endif %}
+                </td>
+                <td>{{ d.student.full_name if d.student else "—" }}</td>
+                <td class="text-muted">{{ d.created_at.strftime("%d %b %Y") }}</td>
+                <td><a href="{{ d.file_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Download</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted">No documents found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

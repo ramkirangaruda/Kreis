@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Upload Document — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Upload Document</h2></div>
+    </div>
+</div>
+
+{% if request.query_params.get("error") %}
+<div class="alert alert-danger">{{ request.query_params.get("error") }}</div>
+{% endif %}
+
+<form method="post" action="/documents/upload" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label required">File</label>
+                    <input type="file" name="file" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required">Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required">Document Type</label>
+                    <select name="doc_type" class="form-select" required>
+                        {% for d in doc_types %}<option value="{{ d }}">{{ d|replace("_"," ")|title }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Link to Student (optional)</label>
+                    <select name="student_id" class="form-select">
+                        <option value="">— None —</option>
+                        {% for s in students %}
+                        <option value="{{ s.id }}">{{ s.full_name }} ({{ s.admission_number }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tags (comma separated)</label>
+                    <input type="text" name="tags" class="form-control" placeholder="e.g. 2026, scholarship">
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a href="/documents/" class="btn btn-link">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="ti ti-upload"></i> Upload</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

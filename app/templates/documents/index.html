@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Documents — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Documents</h2></div>
+        <div class="col-auto ms-auto">
+            <div class="btn-list">
+                <a href="/documents/search" class="btn btn-outline-secondary"><i class="ti ti-search"></i> Search</a>
+                <a href="/documents/upload" class="btn btn-primary"><i class="ti ti-upload"></i> Quick Upload</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Circulars</h3>
+                {% if unread %}<span class="badge bg-danger ms-2">{{ unread }} unread</span>{% endif %}
+                <div class="ms-auto"><a href="/documents/circulars" class="btn btn-sm btn-link">All</a></div>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for c in circulars %}
+                <a href="/documents/circulars/{{ c.id }}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between">
+                        <span>{{ c.title }}</span>
+                        {% if c.urgency.value == "URGENT" %}<span class="badge bg-danger">Urgent</span>{% endif %}
+                    </div>
+                    <div class="text-muted small">{{ c.category.value|title }} · {{ c.created_at.strftime("%d %b") }}</div>
+                </a>
+                {% else %}
+                <div class="list-group-item text-muted text-center">No circulars.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Memos</h3>
+                <div class="ms-auto"><a href="/documents/memos" class="btn btn-sm btn-link">All</a></div>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for m in memos %}
+                <div class="list-group-item">
+                    <div>{{ m.title }}</div>
+                    <div class="text-muted small">{{ m.recipient_type.value|replace("_"," ")|title }} · {{ m.created_at.strftime("%d %b") }}</div>
+                </div>
+                {% else %}
+                <div class="list-group-item text-muted text-center">No memos.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Recent Uploads</h3>
+                <div class="ms-auto"><a href="/documents/search" class="btn btn-sm btn-link">All</a></div>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for d in documents %}
+                <a href="{{ d.file_url }}" target="_blank" class="list-group-item list-group-item-action">
+                    <div>{{ d.title }}</div>
+                    <div class="text-muted small">{{ d.doc_type.value|replace("_"," ")|title }} · {{ d.created_at.strftime("%d %b") }}</div>
+                </a>
+                {% else %}
+                <div class="list-group-item text-muted text-center">No uploads.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

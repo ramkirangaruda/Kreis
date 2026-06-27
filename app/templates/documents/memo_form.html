@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}New Memo — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">New Memo</h2></div>
+    </div>
+</div>
+
+{% if request.query_params.get("error") %}
+<div class="alert alert-danger">{{ request.query_params.get("error") }}</div>
+{% endif %}
+
+<form method="post" action="/documents/memos">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label required">Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label required">Content</label>
+                    <textarea name="content" class="form-control" rows="5" required></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label required">Recipient Type</label>
+                    <select name="recipient_type" class="form-select" required id="recipient_type"
+                            onchange="toggleRecipient(this.value)">
+                        {% for r in recipient_types %}
+                        <option value="{{ r }}">{{ r|replace("_"," ")|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4" id="class-field" style="display:none;">
+                    <label class="form-label">Class</label>
+                    <select name="recipient_class_id" class="form-select">
+                        <option value="">Select…</option>
+                        {% for cs in class_sections %}
+                        <option value="{{ cs.id }}">{{ cs.grade }} - {{ cs.section }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4" id="user-field" style="display:none;">
+                    <label class="form-label">Individual</label>
+                    <select name="recipient_user_id" class="form-select">
+                        <option value="">Select…</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a href="/documents/memos" class="btn btn-link">Cancel</a>
+            <button type="submit" class="btn btn-primary">Send Memo</button>
+        </div>
+    </div>
+</form>
+
+<script>
+function toggleRecipient(val) {
+    document.getElementById('class-field').style.display = (val === 'SPECIFIC_CLASS') ? '' : 'none';
+    document.getElementById('user-field').style.display = (val === 'INDIVIDUAL') ? '' : 'none';
+}
+toggleRecipient(document.getElementById('recipient_type').value);
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Circulars — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Circulars</h2></div>
+        <div class="col-auto ms-auto">
+            {% if is_admin %}
+            <a href="/documents/circulars/new" class="btn btn-primary"><i class="ti ti-plus"></i> New Circular</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2">
+            <div class="col-auto">
+                <select name="category" class="form-select"
+                        hx-get="/documents/circulars" hx-target="#circular-rows" hx-swap="innerHTML"
+                        hx-include="[name=urgency]">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                    <option value="{{ c }}" {% if selected_category==c %}selected{% endif %}>{{ c|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="urgency" class="form-select"
+                        hx-get="/documents/circulars" hx-target="#circular-rows" hx-swap="innerHTML"
+                        hx-include="[name=category]">
+                    <option value="">All Urgencies</option>
+                    {% for u in urgencies %}
+                    <option value="{{ u }}" {% if selected_urgency==u %}selected{% endif %}>{{ u|replace("_"," ")|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr><th>Title</th><th>Category</th><th>Urgency</th><th>Date</th><th>Scope</th><th class="w-1"></th></tr>
+            </thead>
+            <tbody id="circular-rows">
+                {% include "partials/circular_rows.html" %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

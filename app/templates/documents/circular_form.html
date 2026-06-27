@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}New Circular — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">New Circular</h2></div>
+    </div>
+</div>
+
+{% if request.query_params.get("error") %}
+<div class="alert alert-danger">{{ request.query_params.get("error") }}</div>
+{% endif %}
+
+<form method="post" action="/documents/circulars" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label required">Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Content</label>
+                    <textarea name="content" class="form-control" rows="5"></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label required">Category</label>
+                    <select name="category" class="form-select" required>
+                        {% for c in categories %}<option value="{{ c }}">{{ c|title }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label required">Urgency</label>
+                    <select name="urgency" class="form-select" required>
+                        {% for u in urgencies %}<option value="{{ u }}">{{ u|replace("_"," ")|title }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Send To</label>
+                    <select name="institution_id" class="form-select">
+                        <option value="">All Schools (broadcast)</option>
+                        {% for i in institutions %}<option value="{{ i.id }}">{{ i.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Attachment (optional)</label>
+                    <input type="file" name="file" class="form-control">
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a href="/documents/circulars" class="btn btn-link">Cancel</a>
+            <button type="submit" class="btn btn-primary">Publish Circular</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

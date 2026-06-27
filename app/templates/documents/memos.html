@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Memos — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Memos</h2></div>
+        <div class="col-auto ms-auto">
+            {% if can_manage %}
+            <a href="/documents/memos/new" class="btn btn-primary"><i class="ti ti-plus"></i> New Memo</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead><tr><th>Title</th><th>Sender</th><th>Recipient</th><th>Date</th></tr></thead>
+            <tbody>
+                {% for m in memos %}
+                <tr>
+                    <td>{{ m.title }}<div class="text-muted small" style="white-space:pre-wrap;">{{ m.content[:120] }}{% if m.content|length > 120 %}…{% endif %}</div></td>
+                    <td>{{ m.sender.full_name if m.sender else "—" }}</td>
+                    <td>
+                        {{ m.recipient_type.value|replace("_"," ")|title }}
+                        {% if m.recipient_class and m.recipient_class %}
+                        <span class="text-muted">({{ m.recipient_class.grade }}-{{ m.recipient_class.section }})</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ m.created_at.strftime("%d %b %Y") }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">No memos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

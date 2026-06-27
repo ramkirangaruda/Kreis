@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ circular.title }} — Circular{% endblock %}
+
+{% block content %}
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+{% set is_principal = current_user.role.value == "PRINCIPAL" %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/documents/circulars" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left"></i> Back</a>
+        </div>
+        <div class="col"><h2 class="page-title">{{ circular.title }}</h2></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="mb-3">
+            <span class="badge bg-azure-lt">{{ circular.category.value|title }}</span>
+            {% if circular.urgency.value == "URGENT" %}<span class="badge bg-danger">Urgent</span>
+            {% elif circular.urgency.value == "NORMAL" %}<span class="badge bg-blue-lt">Normal</span>
+            {% else %}<span class="badge bg-secondary">For Information</span>{% endif %}
+            {% if circular.institution_id is none %}<span class="badge bg-green-lt">Broadcast — All Schools</span>{% endif %}
+            <span class="text-muted ms-2">{{ circular.created_at.strftime("%d %b %Y %H:%M") }}</span>
+        </div>
+
+        {% if circular.content %}
+        <div class="mb-3" style="white-space:pre-wrap;">{{ circular.content }}</div>
+        {% endif %}
+
+        {% if circular.file_url %}
+        <a href="{{ circular.file_url }}" target="_blank" class="btn btn-outline-primary">
+            <i class="ti ti-download"></i> Download Attachment
+        </a>
+        {% endif %}
+
+        {% if is_principal %}
+        <hr>
+        {% if acknowledged %}
+        <span class="badge bg-green-lt"><i class="ti ti-check"></i> Acknowledged</span>
+        {% else %}
+        <form method="post" action="/documents/circulars/{{ circular.id }}/acknowledge">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-primary"><i class="ti ti-check"></i> Acknowledge</button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if is_admin %}
+<div class="card mt-3">
+    <div class="card-header"><h3 class="card-title">Acknowledgements</h3>
+        <span class="badge bg-blue-lt ms-2">{{ circular.acknowledgements|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>Institution</th><th>Acknowledged At</th></tr></thead>
+            <tbody>
+                {% for a in circular.acknowledgements %}
+                <tr>
+                    <td>{{ a.institution.name if a.institution else a.institution_id }}</td>
+                    <td class="text-muted">{{ a.acknowledged_at.strftime("%d %b %Y %H:%M") }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="text-center text-muted">No acknowledgements yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% for c in circulars %}
+<tr>
+    <td><a href="/documents/circulars/{{ c.id }}">{{ c.title }}</a></td>
+    <td><span class="badge bg-azure-lt">{{ c.category.value|title }}</span></td>
+    <td>
+        {% if c.urgency.value == "URGENT" %}<span class="badge bg-danger">Urgent</span>
+        {% elif c.urgency.value == "NORMAL" %}<span class="badge bg-blue-lt">Normal</span>
+        {% else %}<span class="badge bg-secondary">For Information</span>{% endif %}
+    </td>
+    <td class="text-muted">{{ c.created_at.strftime("%d %b %Y") }}</td>
+    <td>
+        {% if c.institution_id is none %}<span class="badge bg-green-lt">Broadcast</span>
+        {% else %}{{ c.institution.name if c.institution else "—" }}{% endif %}
+    </td>
+    <td><a href="/documents/circulars/{{ c.id }}" class="btn btn-sm btn-outline-secondary">View</a></td>
+</tr>
+{% else %}
+<tr><td colspan="6" class="text-center text-muted">No circulars found.</td></tr>
+{% endfor %}

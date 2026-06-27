@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Search Documents — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Search Documents</h2></div>
+        <div class="col-auto ms-auto">
+            <a href="/documents/upload" class="btn btn-primary"><i class="ti ti-upload"></i> Upload</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2 w-100">
+            <div class="col">
+                <input type="text" name="q" class="form-control" placeholder="Search title, tags, or OCR text…"
+                       value="{{ q or '' }}" autofocus
+                       hx-get="/documents/search" hx-trigger="keyup changed delay:300ms"
+                       hx-target="#doc-results" hx-swap="innerHTML" hx-include="[name=doc_type]">
+            </div>
+            <div class="col-auto">
+                <select name="doc_type" class="form-select"
+                        hx-get="/documents/search" hx-trigger="change"
+                        hx-target="#doc-results" hx-swap="innerHTML" hx-include="[name=q]">
+                    <option value="">All Types</option>
+                    {% for d in doc_types %}
+                    <option value="{{ d }}" {% if selected_doc_type==d %}selected{% endif %}>{{ d|replace("_"," ")|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div id="doc-results">
+        {% include "partials/document_results.html" %}
+    </div>
+</div>
+{% endblock %}
