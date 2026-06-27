@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Faculty Attendance — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/attendance/" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="col"><h2 class="page-title">Faculty Attendance</h2></div>
+        <div class="col-auto ms-auto">
+            <input type="date" class="form-control" value="{{ date.isoformat() }}"
+                   onchange="window.location='/attendance/faculty?date='+this.value">
+        </div>
+    </div>
+</div>
+
+{% if request.query_params.get("saved") %}
+<div class="alert alert-success">Faculty attendance saved.</div>
+{% endif %}
+
+{% if no_institution %}
+<div class="alert alert-info">Select an institution to mark faculty attendance.</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="/attendance/faculty/mark">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="institution_id" value="{{ institution_id }}">
+            <input type="hidden" name="date" value="{{ date.isoformat() }}">
+
+            <div class="table-responsive">
+                <table class="table table-vcenter">
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            {% for opt in statuses %}<th>{{ opt|replace("_"," ")|capitalize }}</th>{% endfor %}
+                            <th>Leave Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        {% set t = row.teacher %}
+                        <tr>
+                            <td>{{ t.full_name }}<div class="text-muted small">{{ t.email }}</div></td>
+                            {% for opt in statuses %}
+                            <td>
+                                <input class="form-check-input" type="radio"
+                                       name="teacher_{{ t.id }}_status" value="{{ opt }}"
+                                       onchange="document.getElementById('leave_{{ t.id }}').disabled = (this.value !== 'ON_LEAVE')"
+                                       {% if row.status == opt %}checked{% elif not row.status and opt == "PRESENT" %}checked{% endif %}>
+                            </td>
+                            {% endfor %}
+                            <td>
+                                <select id="leave_{{ t.id }}" name="teacher_{{ t.id }}_leave"
+                                        class="form-select form-select-sm"
+                                        {% if row.status != "ON_LEAVE" %}disabled{% endif %}>
+                                    {% for lt in leave_types %}
+                                    <option value="{{ lt }}" {% if row.leave_type == lt %}selected{% endif %}>
+                                        {{ lt|capitalize }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="{{ statuses|length + 2 }}" class="text-center text-muted">
+                            No teachers found at this institution.
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if rows %}
+            <div class="btn-list justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary">Save Faculty Attendance</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

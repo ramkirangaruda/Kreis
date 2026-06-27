@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Attendance — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set can_faculty = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Attendance</h2>
+            <div class="page-subtitle-text">{{ today.strftime("%A, %d %B %Y") }}</div>
+        </div>
+        <div class="col-auto ms-auto">
+            <div class="btn-list">
+                <a href="/attendance/low-alert" class="btn btn-outline-danger">
+                    <i class="ti ti-alert-triangle"></i> Low Attendance
+                </a>
+                {% if can_faculty %}
+                <a href="/attendance/faculty" class="btn btn-primary">
+                    <i class="ti ti-users"></i> Faculty Attendance
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    {% for item in sections %}
+    {% set s = item.section %}
+    <div class="col-sm-6 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h3 class="mb-0">Class {{ s.grade }} - {{ s.section }}</h3>
+                    {% if item.marked_today %}
+                    <span class="badge bg-green-lt">Marked</span>
+                    {% else %}
+                    <span class="badge bg-yellow-lt">Not marked</span>
+                    {% endif %}
+                </div>
+                <div class="text-muted mt-1">
+                    {{ item.student_count }} student{{ "" if item.student_count == 1 else "s" }}
+                    {% if current_user.role.value == "KREIS_ADMIN" and s.institution %}
+                    · {{ s.institution.name }}
+                    {% endif %}
+                </div>
+                <div class="btn-list mt-3">
+                    <a href="/attendance/mark?class_section_id={{ s.id }}&date={{ today.isoformat() }}"
+                       class="btn btn-primary btn-sm">Mark Attendance</a>
+                    <a href="/attendance/class/{{ s.id }}" class="btn btn-outline-secondary btn-sm">Report</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card"><div class="card-body text-center text-muted">
+            No class sections found.
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

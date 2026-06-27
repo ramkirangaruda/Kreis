@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Attendance — {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/students/{{ student.id }}" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-arrow-left"></i> Student
+            </a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">Attendance — {{ student.full_name }}</h2>
+            <div class="page-subtitle-text">
+                Admission {{ student.admission_number }}
+                {% if academic_year %} · {{ academic_year.name }}{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if below_75 %}
+<div class="alert alert-danger">
+    <i class="ti ti-alert-triangle me-1"></i>
+    <strong>Low attendance:</strong> {{ percentage }}% — below the 75% requirement.
+</div>
+{% endif %}
+
+<div class="row row-cards mb-3">
+    <div class="col-sm-4">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-label">Attendance</div>
+            <div class="metric-value {% if below_75 %}text-danger{% endif %}">{{ percentage }}%</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-label">Present Days</div>
+            <div class="metric-value">{{ present }}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-label">Absent Days</div>
+            <div class="metric-value">{{ absent }}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">{{ calendar_label }}</h3></div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap" style="gap:6px;">
+            {% for day in calendar %}
+            {% if day.status == "PRESENT" %}{% set bg = "#0F6E56" %}{% set fg = "#fff" %}
+            {% elif day.status == "ABSENT" %}{% set bg = "#C0392B" %}{% set fg = "#fff" %}
+            {% elif day.status == "LATE" %}{% set bg = "#C77D0A" %}{% set fg = "#fff" %}
+            {% elif day.status == "EXCUSED" %}{% set bg = "#6b7280" %}{% set fg = "#fff" %}
+            {% else %}{% set bg = "#f1f3f5" %}{% set fg = "#adb5bd" %}{% endif %}
+            <span title="{{ day.date }}{% if day.status %} — {{ day.status|capitalize }}{% endif %}"
+                  style="width:34px;height:34px;border-radius:6px;background:{{ bg }};color:{{ fg }};
+                         display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;">
+                {{ day.date.day }}
+            </span>
+            {% endfor %}
+        </div>
+        <div class="text-muted small mt-2">
+            <span style="color:#0F6E56;">■</span> Present
+            <span style="color:#C77D0A;">■</span> Late
+            <span style="color:#C0392B;">■</span> Absent
+            <span style="color:#6b7280;">■</span> Excused
+            <span style="color:#ced4da;">■</span> No school / unmarked
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Monthly Summary</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Month</th><th class="text-end">Days</th><th class="text-end">Present</th>
+                    <th class="text-end">Absent</th><th class="text-end">Late</th><th class="text-end">%</th></tr>
+            </thead>
+            <tbody>
+                {% for m in monthly %}
+                <tr>
+                    <td>{{ m.month }}</td>
+                    <td class="text-end">{{ m.total }}</td>
+                    <td class="text-end">{{ m.present }}</td>
+                    <td class="text-end">{{ m.absent }}</td>
+                    <td class="text-end">{{ m.late }}</td>
+                    <td class="text-end {% if m.percentage < 75 %}text-danger{% endif %}">{{ m.percentage }}%</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No attendance records.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

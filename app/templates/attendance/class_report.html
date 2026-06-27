@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Class Report — {{ section.grade }}-{{ section.section }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/attendance/" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">Attendance Report — Class {{ section.grade }} - {{ section.section }}</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a class="btn btn-outline-secondary"
+               href="/attendance/export?class_section_id={{ section.id }}&month={{ date_to.month }}&year={{ date_to.year }}">
+                <i class="ti ti-file-spreadsheet"></i> Export {{ date_to.strftime("%b %Y") }}
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label">From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from.isoformat() }}"
+                       hx-get="/attendance/class/{{ section.id }}" hx-target="#class-report-table"
+                       hx-swap="innerHTML" hx-include="[name=date_to]">
+            </div>
+            <div class="col-auto">
+                <label class="form-label">To</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to.isoformat() }}"
+                       hx-get="/attendance/class/{{ section.id }}" hx-target="#class-report-table"
+                       hx-swap="innerHTML" hx-include="[name=date_from]">
+            </div>
+        </div>
+    </div>
+    <div id="class-report-table">
+        {% include "partials/class_report_table.html" %}
+    </div>
+</div>
+{% endblock %}

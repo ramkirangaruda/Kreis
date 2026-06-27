@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance — {{ section.grade }}-{{ section.section }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/attendance/" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">Attendance — Class {{ section.grade }} - {{ section.section }}</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <input type="hidden" name="class_section_id" value="{{ section.id }}">
+            <input type="date" class="form-control" value="{{ date.isoformat() }}"
+                   hx-get="/attendance/mark" hx-target="#attendance-sheet" hx-swap="innerHTML"
+                   hx-include="[name=class_section_id]" name="date">
+        </div>
+    </div>
+</div>
+
+<div id="attendance-sheet">
+    {% include "partials/attendance_sheet.html" %}
+</div>
+{% endblock %}

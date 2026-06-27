@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Low Attendance Alert — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/attendance/" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">Low Attendance Alert</h2>
+            <div class="page-subtitle-text">{{ total }} student(s) below 75% this academic year</div>
+        </div>
+    </div>
+</div>
+
+{% if not grouped %}
+<div class="card"><div class="card-body text-center text-muted">
+    <i class="ti ti-circle-check" style="font-size:2rem;"></i>
+    <div class="mt-2">No students below 75%. </div>
+</div></div>
+{% endif %}
+
+{% for class_label, students in grouped.items() %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title">Class {{ class_label }}</h3>
+        <span class="badge bg-danger ms-2">{{ students|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Admission No</th><th>Name</th>
+                    <th class="text-end">Days Marked</th><th class="text-end">Attendance %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr style="background:#FCEBEB;">
+                    <td class="text-muted">{{ s.admission_number }}</td>
+                    <td><a href="/attendance/student/{{ s.student_id }}">{{ s.full_name }}</a></td>
+                    <td class="text-end">{{ s.total }}</td>
+                    <td class="text-end text-danger fw-bold">{{ s.percentage }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

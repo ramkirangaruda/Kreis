@@ -1,0 +1,34 @@
+<div class="table-responsive">
+    <table class="table table-vcenter card-table">
+        <thead>
+            <tr>
+                <th>Admission No</th>
+                <th>Name</th>
+                <th class="text-end">Days</th>
+                <th class="text-end">Present</th>
+                <th class="text-end">Absent</th>
+                <th class="text-end">%</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr {% if r.below_75 %}style="background:#FCEBEB;"{% endif %}>
+                <td class="text-muted">{{ r.admission_number }}</td>
+                <td><a href="/attendance/student/{{ r.student_id }}">{{ r.full_name }}</a></td>
+                <td class="text-end">{{ r.total }}</td>
+                <td class="text-end">{{ r.present }}</td>
+                <td class="text-end">{{ r.absent }}</td>
+                <td class="text-end {% if r.below_75 %}text-danger fw-bold{% endif %}">{{ r.percentage }}%</td>
+                <td>
+                    {% if r.total == 0 %}<span class="badge bg-secondary">No data</span>
+                    {% elif r.below_75 %}<span class="badge bg-danger">Below 75%</span>
+                    {% else %}<span class="badge bg-success">OK</span>{% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center text-muted">No students found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

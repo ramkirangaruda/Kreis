@@ -1,0 +1,62 @@
+<div class="card">
+    {% if request.query_params.get("saved") %}
+    <div class="card-status-top bg-success"></div>
+    {% endif %}
+    <div class="card-body">
+        {% if request.query_params.get("saved") %}
+        <div class="alert alert-success">Attendance saved.</div>
+        {% endif %}
+        {% if already_marked %}
+        <div class="alert alert-info">
+            Attendance already recorded for {{ date.isoformat() }}. You can edit and resubmit.
+        </div>
+        {% endif %}
+
+        <form method="post" action="/attendance/mark">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="class_section_id" value="{{ section.id }}">
+            <input type="hidden" name="date" value="{{ date.isoformat() }}">
+
+            <div class="table-responsive">
+                <table class="table table-vcenter">
+                    <thead>
+                        <tr>
+                            <th class="w-1">#</th>
+                            <th>Admission No</th>
+                            <th>Name</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Late</th>
+                            <th>Excused</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        {% set s = row.student %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="text-muted">{{ s.admission_number }}</td>
+                            <td>{{ s.full_name }}</td>
+                            {% for opt in statuses %}
+                            <td>
+                                <input class="form-check-input" type="radio"
+                                       name="student_{{ s.id }}_status" value="{{ opt }}"
+                                       {% if row.status == opt %}checked{% elif not row.status and opt == "PRESENT" %}checked{% endif %}>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted">No students in this class.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if rows %}
+            <div class="btn-list justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary">Save Attendance</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
