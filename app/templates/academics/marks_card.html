@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Marks Card — {{ student.full_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css">
+    <style>
+        body { background: #f4f5f7; padding: 24px; }
+        .marks-card { max-width: 800px; margin: 0 auto; background: #fff;
+                      border: 1px solid #d0d0d8; border-radius: 8px; padding: 32px; }
+        .mc-head { text-align: center; border-bottom: 2px solid #1e1e2e; padding-bottom: 12px; margin-bottom: 16px; }
+        .mc-head h1 { font-size: 1.4rem; margin: 0; font-weight: 800; letter-spacing: .03em; }
+        .mc-head .sub { color: #666; font-size: .9rem; }
+        .mc-meta { display: flex; flex-wrap: wrap; gap: 8px 32px; margin-bottom: 18px; }
+        .mc-meta div span { color: #888; }
+        table.mc { width: 100%; border-collapse: collapse; }
+        table.mc th, table.mc td { border: 1px solid #d0d0d8; padding: 8px 12px; }
+        table.mc th { background: #f4f4f8; text-align: left; font-size: .8rem; text-transform: uppercase; color: #555; }
+        .mc-total td { font-weight: 700; background: #f9f9fb; }
+        .mc-foot { display: flex; justify-content: space-between; margin-top: 18px; }
+        .mc-grade { font-size: 1.6rem; font-weight: 800; }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .marks-card { border: none; }
+            .d-print-none { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="marks-card">
+        <div class="mc-head">
+            <h1>{{ student.institution.name if student.institution else "KREIS" }}</h1>
+            <div class="sub">Karnataka Residential Educational Institutions Society</div>
+            <div class="sub mt-1"><strong>{{ exam.name }}</strong> — {{ exam.exam_type.value|replace("_"," ")|title }}</div>
+        </div>
+
+        <div class="mc-meta">
+            <div><span>Name:</span> <strong>{{ student.full_name }}</strong></div>
+            <div><span>Admission No:</span> <strong>{{ student.admission_number }}</strong></div>
+            <div><span>Class:</span> <strong>{% if student.class_section %}{{ student.class_section.grade }} - {{ student.class_section.section }}{% endif %}</strong></div>
+            <div><span>Rank:</span> <strong>{{ rank or "—" }} / {{ class_size }}</strong></div>
+        </div>
+
+        <table class="mc">
+            <thead>
+                <tr><th>Subject</th><th>Max Marks</th><th>Obtained</th><th>Grade</th></tr>
+            </thead>
+            <tbody>
+                {% for l in lines %}
+                <tr>
+                    <td>{{ l.subject }}</td>
+                    <td>{{ l.max|int }}</td>
+                    <td>{% if l.is_absent %}AB{% else %}{{ l.obtained|int }}{% endif %}</td>
+                    <td>{{ l.grade }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:#888;">No marks recorded.</td></tr>
+                {% endfor %}
+                {% if lines %}
+                <tr class="mc-total">
+                    <td>Total</td>
+                    <td>{{ total_max|int }}</td>
+                    <td>{{ total_obtained|int }}</td>
+                    <td>{{ overall_grade }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="mc-foot">
+            <div>
+                <div><span style="color:#888;">Percentage</span></div>
+                <div class="mc-grade">{{ percentage }}%</div>
+            </div>
+            <div style="text-align:right;">
+                <div><span style="color:#888;">Overall Grade</span></div>
+                <div class="mc-grade">{{ overall_grade }}</div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 d-print-none">
+            <button class="btn btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+            <a class="btn btn-link" href="/academics/exams/{{ exam.id }}/results">Back to results</a>
+        </div>
+    </div>
+</body>
+</html>

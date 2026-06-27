@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Competitive Results — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/academics/" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left"></i> Back</a>
+        </div>
+        <div class="col"><h2 class="page-title">Competitive Exam Results</h2></div>
+    </div>
+</div>
+
+{% if request.query_params.get("error") %}
+<div class="alert alert-danger">{{ request.query_params.get("error") }}</div>
+{% endif %}
+
+{% if can_manage %}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Add Result</h3></div>
+    <div class="card-body">
+        <form method="post" action="/academics/competitive">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label required">Student</label>
+                    <select name="student_id" class="form-select" required>
+                        <option value="">Select…</option>
+                        {% for s in students %}
+                        <option value="{{ s.id }}">{{ s.full_name }} ({{ s.admission_number }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label required">Exam</label>
+                    <select name="exam_name" class="form-select" required>
+                        {% for e in exam_names %}<option value="{{ e }}">{{ e|replace("_"," ") }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label required">Year</label>
+                    <input type="number" name="exam_year" class="form-control" required value="{{ selected_year or 2026 }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Roll No</label>
+                    <input type="text" name="roll_number" class="form-control">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Rank</label>
+                    <input type="number" name="rank" class="form-control">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Score</label>
+                    <input type="number" step="0.01" name="score" class="form-control">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <label class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" name="qualified" value="1">
+                        <span class="form-check-label">Qualified</span>
+                    </label>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="row g-2">
+            <div class="col-auto">
+                <select name="exam_name" class="form-select"
+                        onchange="window.location='/academics/competitive?exam_name='+this.value+'&year={{ selected_year }}'">
+                    <option value="">All Exams</option>
+                    {% for e in exam_names %}
+                    <option value="{{ e }}" {% if selected_exam_name == e %}selected{% endif %}>{{ e|replace("_"," ") }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <input type="number" class="form-control" placeholder="Year" value="{{ selected_year }}"
+                       onchange="window.location='/academics/competitive?exam_name={{ selected_exam_name }}&year='+this.value">
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Student</th><th>Exam</th><th>Year</th><th class="text-end">Rank</th>
+                    <th class="text-end">Score</th><th>Qualified</th></tr>
+            </thead>
+            <tbody>
+                {% for item in results %}
+                {% set r = item.result %}
+                <tr>
+                    <td>{{ item.student.full_name }}<div class="text-muted small">{{ item.student.admission_number }}</div></td>
+                    <td>{{ r.exam_name.value|replace("_"," ") }}</td>
+                    <td>{{ r.exam_year }}</td>
+                    <td class="text-end">{{ r.rank if r.rank is not none else "—" }}</td>
+                    <td class="text-end">{{ r.score if r.score is not none else "—" }}</td>
+                    <td>{% if r.qualified %}<span class="badge bg-green-lt">Qualified</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No competitive results.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+<div class="table-responsive">
+    <table class="table table-vcenter card-table">
+        <thead>
+            <tr>
+                <th>Student</th>
+                {% for subj in subjects %}<th class="text-center">{{ subj.name }}</th>{% endfor %}
+                <th class="text-end">Total</th>
+                <th class="text-end">%</th>
+                <th class="text-end">Rank</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td>{{ r.student.full_name }}<div class="text-muted small">{{ r.student.admission_number }}</div></td>
+                {% for subj in subjects %}
+                    {% set m = r.marks.get(subj.id) %}
+                    {% if m %}
+                        {% if m.is_absent %}{% set bg = "#f1f3f5" %}
+                        {% elif m.percentage < 35 %}{% set bg = "#FCEBEB" %}
+                        {% elif m.percentage < 60 %}{% set bg = "#FAEEDA" %}
+                        {% else %}{% set bg = "#E1F5EE" %}{% endif %}
+                    <td class="text-center" style="background:{{ bg }};">
+                        {% if m.is_absent %}<span class="text-muted">AB</span>
+                        {% else %}{{ m.obtained|int }}/{{ m.max|int }}<div class="small text-muted">{{ m.grade }}</div>{% endif %}
+                    </td>
+                    {% else %}
+                    <td class="text-center text-muted">—</td>
+                    {% endif %}
+                {% endfor %}
+                <td class="text-end">{{ r.total_obtained|int }}/{{ r.total_max|int }}</td>
+                <td class="text-end">{{ r.percentage }}%</td>
+                <td class="text-end"><span class="badge bg-azure-lt">{{ r.rank }}</span></td>
+                <td>
+                    <a href="/academics/students/{{ r.student.id }}/marks-card?exam_id={{ exam.id }}"
+                       class="btn btn-sm btn-outline-secondary">Marks Card</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="{{ subjects|length + 5 }}" class="text-center text-muted">
+                No results entered{% if not selected_class_section_id %} (select a class){% endif %}.
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

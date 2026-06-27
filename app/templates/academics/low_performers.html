@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Low Performers — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <a href="/academics/" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left"></i> Back</a>
+        </div>
+        <div class="col">
+            <h2 class="page-title">Low Performers</h2>
+            <div class="page-subtitle-text">{{ total }} student(s) scoring below 35% in one or more subjects</div>
+        </div>
+        <div class="col-auto ms-auto">
+            <select name="exam_id" class="form-select"
+                    onchange="window.location='/academics/low-performers?exam_id='+this.value">
+                <option value="">All Exams</option>
+                {% for e in exams %}
+                <option value="{{ e.id }}" {% if selected_exam_id == e.id %}selected{% endif %}>{{ e.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+{% if not grouped %}
+<div class="card"><div class="card-body text-center text-muted">
+    <i class="ti ti-circle-check" style="font-size:2rem;"></i>
+    <div class="mt-2">No students flagged.</div>
+</div></div>
+{% endif %}
+
+{% for class_label, students in grouped.items() %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title">Class {{ class_label }}</h3>
+        <span class="badge bg-danger ms-2">{{ students|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Student</th><th>Flagged Subjects</th></tr>
+            </thead>
+            <tbody>
+                {% for entry in students %}
+                <tr>
+                    <td style="white-space:nowrap;">
+                        <a href="/students/{{ entry.student.id }}">{{ entry.student.full_name }}</a>
+                        <div class="text-muted small">{{ entry.student.admission_number }}</div>
+                    </td>
+                    <td>
+                        {% for f in entry.flagged %}
+                        <span class="badge bg-red-lt me-1 mb-1">
+                            {{ f.subject }}: {{ f.obtained|int }}/{{ f.max|int }} ({{ f.percentage }}%)
+                            <span class="text-muted">· {{ f.exam }}</span>
+                        </span>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

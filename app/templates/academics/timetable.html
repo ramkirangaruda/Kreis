@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Timetable — {{ section.grade }}-{{ section.section }}{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Timetable — Class {{ section.grade }} - {{ section.section }}</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            {% if edit %}
+            <a href="/academics/timetable/{{ section.id }}" class="btn btn-link">Cancel</a>
+            {% elif can_manage %}
+            <a href="/academics/timetable/{{ section.id }}/edit" class="btn btn-primary"><i class="ti ti-edit"></i> Edit</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if request.query_params.get("error") %}
+<div class="alert alert-danger">{{ request.query_params.get("error") }}</div>
+{% endif %}
+
+{% macro cell(day, period) %}
+    {% set slot = grid.get((day, period)) %}
+    {% if edit %}
+    <select name="slot_{{ day }}_{{ period }}_subject" class="form-select form-select-sm mb-1">
+        <option value="">— Subject —</option>
+        {% for sub in subjects %}
+        <option value="{{ sub.id }}" {% if slot and slot.subject_id == sub.id %}selected{% endif %}>{{ sub.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="slot_{{ day }}_{{ period }}_teacher" class="form-select form-select-sm">
+        <option value="">— Teacher —</option>
+        {% for t in teachers %}
+        <option value="{{ t.id }}" {% if slot and slot.teacher_id == t.id %}selected{% endif %}>{{ t.full_name }}</option>
+        {% endfor %}
+    </select>
+    {% else %}
+        {% if slot and slot.subject %}
+        <div class="fw-bold">{{ slot.subject.name }}</div>
+        <div class="text-muted small">{{ slot.teacher.full_name if slot.teacher else "—" }}</div>
+        {% else %}<span class="text-muted">—</span>{% endif %}
+    {% endif %}
+{% endmacro %}
+
+{% set table %}
+<div class="table-responsive">
+    <table class="table table-vcenter table-bordered">
+        <thead>
+            <tr>
+                <th style="width:90px">Period</th>
+                {% for day in days %}<th class="text-center">{{ day|capitalize }}</th>{% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for period in periods %}
+            <tr>
+                <td class="fw-bold">P{{ period }}</td>
+                {% for day in days %}
+                <td style="min-width:150px;vertical-align:top;">{{ cell(day, period) }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endset %}
+
+<div class="card">
+    {% if edit %}
+    <form method="post" action="/academics/timetable/{{ section.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {{ table }}
+        <div class="card-footer text-end">
+            <button type="submit" class="btn btn-primary">Save Timetable</button>
+        </div>
+    </form>
+    {% else %}
+        {{ table }}
+    {% endif %}
+</div>
+{% endblock %}

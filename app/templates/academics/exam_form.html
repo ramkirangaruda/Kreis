@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}New Exam — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">New Exam</h2></div>
+    </div>
+</div>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<form method="post" action="/academics/exams">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label required">Exam Name</label>
+                    <input type="text" name="name" class="form-control" required
+                           placeholder="e.g. Unit Test 1" value="{{ values.get('name','') }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required">Type</label>
+                    <select name="exam_type" class="form-select" required>
+                        <option value="">Select…</option>
+                        {% for t in exam_types %}
+                        <option value="{{ t }}" {% if values.get('exam_type')==t %}selected{% endif %}>
+                            {{ t|replace("_"," ")|title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required">Start Date</label>
+                    <input type="date" name="start_date" class="form-control" required value="{{ values.get('start_date','') }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required">End Date</label>
+                    <input type="date" name="end_date" class="form-control" required value="{{ values.get('end_date','') }}">
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a href="/academics/" class="btn btn-link">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Exam</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

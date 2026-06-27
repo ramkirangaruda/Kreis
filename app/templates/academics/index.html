@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Academics — KREIS IMS{% endblock %}
+
+{% block content %}
+{% set can_manage = current_user.role.value in ["KREIS_ADMIN", "PRINCIPAL"] %}
+{% set is_admin = current_user.role.value == "KREIS_ADMIN" %}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Academics</h2></div>
+        <div class="col-auto ms-auto">
+            <div class="btn-list">
+                <a href="/academics/competitive" class="btn btn-outline-secondary">Competitive Results</a>
+                {% if can_manage %}
+                <a href="/academics/exams/new" class="btn btn-primary"><i class="ti ti-plus"></i> New Exam</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards mb-3">
+    <div class="col-sm-4">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-calendar-event"></i></div>
+            <div class="metric-label">Upcoming Exams</div>
+            <div class="metric-value">{{ upcoming_count }}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-clipboard-list"></i></div>
+            <div class="metric-label">Total Exams</div>
+            <div class="metric-value">{{ exam_count }}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <a href="/academics/low-performers" class="text-decoration-none">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-icon"><i class="ti ti-alert-triangle"></i></div>
+            <div class="metric-label">Flagged (Low Performance)</div>
+            <div class="metric-value {% if low_count %}text-danger{% endif %}">{{ low_count }}</div>
+        </div></div>
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Exams</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr><th>Name</th><th>Type</th><th>Start</th><th>End</th><th class="w-1">Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for e in exams %}
+                <tr>
+                    <td>{{ e.name }}</td>
+                    <td><span class="badge bg-azure-lt">{{ e.exam_type.value|replace("_"," ")|title }}</span></td>
+                    <td>{{ e.start_date }}</td>
+                    <td>{{ e.end_date }}</td>
+                    <td>
+                        <div class="btn-list flex-nowrap">
+                            <a href="/academics/exams/{{ e.id }}/results" class="btn btn-sm btn-outline-secondary">Results</a>
+                            <a href="/academics/exams/{{ e.id }}/enter-results" class="btn btn-sm btn-outline-secondary">Enter Marks</a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted">No exams yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
