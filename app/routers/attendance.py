@@ -58,7 +58,7 @@ def _to_int(value):
 async def attendance_index(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_TEACHER),
 ):
     today = _today()
     sections = await list_sections_with_status(db, current_user, today)

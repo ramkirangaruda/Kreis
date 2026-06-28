@@ -55,7 +55,7 @@ def _parse_date(v):
 async def academics_index(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_TEACHER),
 ):
     inst = _scope(current_user)
     exams = await list_exams(db, inst, current_user=current_user)

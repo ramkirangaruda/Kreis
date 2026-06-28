@@ -12,12 +12,14 @@ services:
       - .env
 
     environment:
-      DATABASE_URL: postgresql+asyncpg://kreis:password@postgres:5432/kreis_ims
+      DATABASE_URL: postgresql+asyncpg://kreis:password@pgbouncer:5432/kreis_ims
       REDIS_URL: redis://redis:6379
 
     depends_on:
       postgres:
         condition: service_healthy
+      pgbouncer:
+        condition: service_started
       redis:
         condition: service_started
 
@@ -41,7 +43,36 @@ services:
       - .env
 
     environment:
-      DATABASE_URL: postgresql+asyncpg://kreis:password@postgres:5432/kreis_ims
+      DATABASE_URL: postgresql+asyncpg://kreis:password@pgbouncer:5432/kreis_ims
+      REDIS_URL: redis://redis:6379
+      PYTHONPATH: /app
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_started
+
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+
+    restart: unless-stopped
+
+  celery_beat:
+    build: .
+
+    container_name: kreis-celery-beat
+
+    command: celery -A app.tasks beat --loglevel=info
+
+    env_file:
+      - .env
+
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kreis:password@pgbouncer:5432/kreis_ims
       REDIS_URL: redis://redis:6379
       PYTHONPATH: /app
 
@@ -53,7 +84,28 @@ services:
 
     volumes:
       - .:/app
-      - ./uploads:/app/uploads
+
+    restart: unless-stopped
+
+  pgbouncer:
+    image: edoburu/pgbouncer
+
+    container_name: kreis-pgbouncer
+
+    environment:
+      DATABASE_URL: "postgres://kreis:password@postgres:5432/kreis_ims"
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      # Plain client auth on the trusted internal Docker network avoids the
+      # Postgres-15 SCRAM ↔ PgBouncer md5 "wrong password type" mismatch.
+      AUTH_TYPE: plain
+      # asyncpg sends parameters that pgbouncer must ignore in txn pooling mode
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
     restart: unless-stopped
 

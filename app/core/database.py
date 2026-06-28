@@ -11,7 +11,15 @@ from app.core.config import settings
 
 engine = create_async_engine(
     settings.database_url,
-    echo=settings.debug
+    echo=settings.debug,
+    # PgBouncer in transaction pooling mode does not support server-side
+    # prepared statements. Disabling asyncpg's statement cache (and giving each
+    # prepared statement a unique name) makes the app safe behind PgBouncer;
+    # it is harmless when connecting straight to Postgres.
+    connect_args={
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    },
 )
 
 

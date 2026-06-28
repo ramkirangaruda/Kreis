@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Scanner Devices — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Face Scanner Devices</h2></div>
+    </div>
+</div>
+
+{% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Register Scanner</h3></div>
+    <div class="card-body">
+        <form method="post" action="/admin/scanners">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label required">Device ID</label>
+                    <input type="text" name="device_id" class="form-control" placeholder="SCANNER-001" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label required">Institution</label>
+                    <select name="institution_id" class="form-select" required>
+                        {% for i in institutions %}<option value="{{ i.id }}">{{ i.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label required">Location</label>
+                    <input type="text" name="location" class="form-control" placeholder="Main Gate" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label required">Type</label>
+                    <input type="text" name="device_type" class="form-control" placeholder="ZKTeco" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter table-bordered card-table">
+            <thead>
+                <tr><th>Device ID</th><th>Institution</th><th>Location</th><th>Type</th>
+                    <th>Last Seen</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                {% set d = r.device %}
+                <tr>
+                    <td><span class="text-muted">{{ d.device_id }}</span></td>
+                    <td>{{ d.institution.name if d.institution else "—" }}</td>
+                    <td>{{ d.location }}</td>
+                    <td>{{ d.device_type }}</td>
+                    <td class="text-muted">{{ d.last_seen.strftime("%d %b %Y %H:%M") if d.last_seen else "never" }}</td>
+                    <td>
+                        {% if r.online %}<span class="badge bg-success">Online</span>
+                        {% else %}<span class="badge bg-secondary">Offline</span>{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No scanners registered.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

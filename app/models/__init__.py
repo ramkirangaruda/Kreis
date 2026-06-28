@@ -38,6 +38,8 @@ from app.models.document import (
     Memo,
     UploadedDocument,
     UtilityBill,
+    ScannerDevice,
+    AttendanceRollup,
     CircularCategory,
     Urgency,
     RecipientType,

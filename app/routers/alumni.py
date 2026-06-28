@@ -62,7 +62,7 @@ async def alumni_list(
     occupation: str = "",
     search: str = "",
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_MANAGER),
 ):
     alumni = await list_alumni(
         db, current_user, batch_year=_to_int(batch_year),

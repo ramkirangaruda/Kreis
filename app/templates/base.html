@@ -90,6 +90,12 @@
                     {% endif %}
 
                     {% if role in ADMIN %}
+                    <a class="nav-link {% if path.startswith('/admin/analytics') %}active{% endif %}" href="/admin/analytics">
+                        <i class="ti ti-chart-histogram"></i> Analytics
+                    </a>
+                    <a class="nav-link {% if path.startswith('/admin/scanners') %}active{% endif %}" href="/admin/scanners">
+                        <i class="ti ti-scan"></i> Scanners
+                    </a>
                     <a class="nav-link {% if path.startswith('/reports/audit') %}active{% endif %}" href="/reports/audit">
                         <i class="ti ti-history"></i> Audit Log
                     </a>

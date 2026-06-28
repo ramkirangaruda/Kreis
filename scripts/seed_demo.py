@@ -29,7 +29,7 @@ from app.models.academic import (
     Subject, Exam, ExamResult, CompetitiveExamResult, ExamType, CompetitiveExamName,
 )
 from app.models.alumni import Alumni
-from app.models.document import Circular, CircularCategory, Urgency
+from app.models.document import Circular, CircularCategory, Urgency, ScannerDevice
 from app.services.academics import grade_for
 
 
@@ -580,6 +580,40 @@ async def seed_erp(db) -> dict:
         comp_created += 1
     await db.flush()
     summary["competitive_created"] = comp_created
+
+    # ── Scanner device + simulated webhook scans for today ──
+    device = (await db.execute(
+        select(ScannerDevice).where(ScannerDevice.device_id == "SCANNER-RGH-01")
+    )).scalars().first()
+    if not device:
+        device = ScannerDevice(
+            device_id="SCANNER-RGH-01", institution_id=rgh.id,
+            location="Main Gate", device_type="ZKTeco", last_seen=datetime.utcnow(),
+        )
+        db.add(device)
+    else:
+        device.last_seen = datetime.utcnow()
+    summary["scanner_devices"] = 1
+
+    marker = admin.id
+    today = date.today()
+    scan_marks = 0
+    for st in all_students[:5]:
+        existing = (await db.execute(
+            select(StudentAttendance).where(
+                StudentAttendance.student_id == st.id,
+                StudentAttendance.date == today,
+            )
+        )).scalar_one_or_none()
+        if existing:
+            existing.status = StudentAttendanceStatus.PRESENT
+        else:
+            db.add(StudentAttendance(
+                student_id=st.id, class_section_id=st.class_section_id,
+                date=today, status=StudentAttendanceStatus.PRESENT, marked_by_id=marker,
+            ))
+        scan_marks += 1
+    summary["scanner_marks"] = scan_marks
 
     await db.commit()
     return summary

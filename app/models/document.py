@@ -3,12 +3,15 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     String,
+    Integer,
     Float,
+    Boolean,
     Text,
     Date,
     DateTime,
     Enum,
     ForeignKey,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -180,3 +183,42 @@ class UtilityBill(Base):
     )
 
     institution: Mapped["Institution"] = relationship()
+
+
+# ── Phase 3: face scanner device registry ──────────────────────
+
+class ScannerDevice(Base):
+    __tablename__ = "scanner_devices"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    device_id: Mapped[str] = mapped_column(String(50), unique=True)
+    institution_id: Mapped[int] = mapped_column(ForeignKey("institutions.id"))
+    location: Mapped[str] = mapped_column(String(100))
+    device_type: Mapped[str] = mapped_column(String(50))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_seen: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+    institution: Mapped["Institution"] = relationship()
+
+
+# ── Phase 3: monthly attendance rollup (fast dashboard queries) ─
+
+class AttendanceRollup(Base):
+    __tablename__ = "attendance_rollups"
+    __table_args__ = (
+        UniqueConstraint("student_id", "month", "year", name="uq_rollup_student_month"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"))
+    institution_id: Mapped[int] = mapped_column(ForeignKey("institutions.id"))
+    month: Mapped[int] = mapped_column(Integer)
+    year: Mapped[int] = mapped_column(Integer)
+    total_days: Mapped[int] = mapped_column(Integer, default=0)
+    present_days: Mapped[int] = mapped_column(Integer, default=0)
+    absent_days: Mapped[int] = mapped_column(Integer, default=0)
+    late_days: Mapped[int] = mapped_column(Integer, default=0)
+    percentage: Mapped[float] = mapped_column(Float, default=0.0)

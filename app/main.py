@@ -18,6 +18,8 @@ from app.routers import (
     academics,
     documents,
     alumni,
+    scanner,
+    admin,
 )
 
 app = FastAPI(
@@ -102,6 +104,18 @@ app.include_router(
     alumni.router,
     prefix="/alumni",
     tags=["alumni"]
+)
+
+app.include_router(
+    scanner.router,
+    prefix="/api/scanner",
+    tags=["scanner"]
+)
+
+app.include_router(
+    admin.router,
+    prefix="/admin",
+    tags=["admin"]
 )
 
 

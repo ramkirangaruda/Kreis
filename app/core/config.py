@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     bhashini_api_key: str = ""
     bhashini_user_id: str = ""
 
+    # Face-scanner webhook authentication
+    scanner_api_key: str = "change-this-in-production"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Cross-School Analytics — KREIS IMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col"><h2 class="page-title">Cross-School Analytics</h2></div>
+    </div>
+</div>
+
+{# ── Attendance comparison ── #}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Attendance</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>School</th><th class="text-end">Today</th><th class="text-end">Monthly Avg</th></tr></thead>
+            <tbody>
+                {% for s in schools %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td class="text-end {% if s.today_rate < 75 %}text-danger{% endif %}">{{ s.today_rate }}%</td>
+                    <td class="text-end">{{ s.monthly_avg }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Academic performance ── #}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Academic Performance (latest exam)</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>School</th><th>Exam</th><th class="text-end">Average %</th></tr></thead>
+            <tbody>
+                {% for s in schools %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.academics.exam }}</td>
+                    <td class="text-end">{% if s.academics.avg_pct is not none %}{{ s.academics.avg_pct }}%{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Competitive exams ── #}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Competitive Exam Qualification</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>School</th><th>Exam</th><th>Year</th><th class="text-end">Qualified / Total</th><th class="text-end">Rate</th></tr></thead>
+            <tbody>
+                {% for s in schools %}
+                    {% for c in s.competitive %}
+                    <tr>
+                        <td>{{ s.name }}</td>
+                        <td>{{ c.exam|replace("_"," ") }}</td>
+                        <td>{{ c.year }}</td>
+                        <td class="text-end">{{ c.qualified }} / {{ c.total }}</td>
+                        <td class="text-end">{{ c.rate }}%</td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+                {% if not schools|selectattr("competitive")|list %}
+                <tr><td colspan="5" class="text-center text-muted">No competitive results recorded.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Inventory low stock ── #}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Inventory — Low Stock Alerts</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>School</th><th class="text-end">Low-Stock Items</th></tr></thead>
+            <tbody>
+                {% for s in schools %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td class="text-end">
+                        {% if s.low_stock %}<span class="badge bg-danger">{{ s.low_stock }}</span>
+                        {% else %}<span class="text-muted">0</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Circular acknowledgement ── #}
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title">Circular Acknowledgement (last {{ last_circulars|length }})</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>School</th><th>Not Yet Acknowledged</th></tr></thead>
+            <tbody>
+                {% for s in schools %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>
+                        {% if s.pending_circulars %}
+                            {% for t in s.pending_circulars %}<span class="badge bg-red-lt me-1">{{ t }}</span>{% endfor %}
+                        {% else %}<span class="badge bg-green-lt">All acknowledged</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Student count + caste breakdown ── #}
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Students by School & Category</h3></div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>School</th><th class="text-end">Total</th>
+                    {% for c in castes %}<th class="text-end">{{ c }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+                {% for s in schools %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td class="text-end">{{ s.student_total }}</td>
+                    {% for c in castes %}<td class="text-end">{{ s.caste[c] }}</td>{% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
